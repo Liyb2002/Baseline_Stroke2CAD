@@ -1,11 +1,16 @@
 import json
 import os
+from pathlib import Path
 
-from dataset import StrokeDataset
+from preprocessing.dataset import StrokeDataset
 
-data_path = '../dataset'
-save_folder = '../output/sampled_data'
 
-stroke_DS = StrokeDataset(data_path)
-stroke_DS.save_sample(save_folder)
+def get_stroke_dataset():
+    data_filepath = Path(__file__).parent.parent / "dataset"
+    sample_chaeck_folder = Path(__file__).parent.parent /"output"/"sampled_check_data"
+
+    stroke_dataset = StrokeDataset(data_filepath)
+    stroke_dataset.save_sample(sample_chaeck_folder)
+    
+    return stroke_dataset
 

@@ -4,26 +4,45 @@ from tqdm import tqdm
 import json
 from glob import glob
 from PIL import Image
-
 from torch.utils.data import Dataset
-from io_utils import read_json_file
+from torchvision import transforms
+
+from preprocessing.io_utils import read_json_file
 
 
 class StrokeDataset(Dataset):
-    def __init__(self, data_path, batch_size=1):
+    def __init__(self, data_path):
         self.data_path = data_path
-        self.batch_size = batch_size
-        self.CAD_stroke_pairs = self.get_files(data_path, 0, batch_size)
+        self.CAD_stroke_pairs = self.get_files(data_path)
+
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+        ])
+
 
     def __len__(self):
         return len(self.CAD_stroke_pairs)
+    
+    def __getitem__(self, idx):
 
-    def get_files(self, data_path, start_index=0, batch_size=1):
+        item = self.CAD_stroke_pairs[idx]
+        CAD_Program = item['CAD_Program']
+        stroke_image_path = item['npr_image']
+
+        stroke_image = Image.open(stroke_image_path).convert('RGB') 
+        if self.transform:
+            stroke_image = self.transform(stroke_image)
+        
+        return {'CAD_Program': CAD_Program, 'stroke_image': stroke_image}
+
+
+    def get_files(self, data_path):
         CAD_stroke_pairs = []
+        if not os.path.exists(data_path):
+            print("sad data_path", data_path)
 
         if os.path.exists(data_path):
             sub_folders = [d for d in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, d))]
-            sub_folders = sub_folders[start_index:start_index + batch_size]
 
             for sub_folder in tqdm(sub_folders):
                 sub_folder_path = os.path.join(data_path, sub_folder)
@@ -36,7 +55,6 @@ class StrokeDataset(Dataset):
                 stroke_folders = [d for d in os.listdir(sub_folder_path) if os.path.isdir(os.path.join(sub_folder_path, d))]
                 for stroke_folder in stroke_folders:
                     training_data_path = os.path.join(sub_folder_path, stroke_folder, 'training_data')
-
                     npr_images = glob(os.path.join(training_data_path, 'npr*.png'))
                     for npr_image in npr_images:
                         CAD_stroke_pairs.append({'CAD_Program': CAD_Program, 'npr_image': npr_image})
@@ -69,3 +87,4 @@ class StrokeDataset(Dataset):
             print(f"CAD program saved at {cad_save_path}")
         except Exception as e:
             print(f"Error saving data: {e}")
+
