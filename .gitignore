@@ -1,1 +1,2 @@
-cad2sketch_dataset/*
+dataset/*
+*.json
