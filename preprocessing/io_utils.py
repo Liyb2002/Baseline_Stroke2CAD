@@ -41,5 +41,4 @@ def load_model(model, checkpoint_path):
         model.load_state_dict(torch.load(checkpoint_path))
         return model
     else:
-        print(f"No checkpoint found at {checkpoint_path}")
         return None

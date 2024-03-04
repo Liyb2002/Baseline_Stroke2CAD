@@ -4,6 +4,7 @@ import torch.optim as optim
 from tqdm import tqdm
 from torch.optim import Adam
 import os
+import torchvision.transforms.functional as TF
 
 import preprocessing.preprocess
 import preprocessing.io_utils
@@ -20,9 +21,9 @@ def train_autoencoder(dataset, num_epochs=1, learning_rate=1e-3, batch_size=32):
 
 
     checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "stroke_encoder", "stroke_encoder" + ".ckpt")
-    loaded_model = preprocessing.io_utils.load_model(stroke_encoder, checkpoint_path)
-    if loaded_model is not None:
-        return loaded_model
+    # loaded_model = preprocessing.io_utils.load_model(stroke_encoder, checkpoint_path)
+    # if loaded_model is not None:
+    #     return loaded_model
 
 
     criterion = torch.nn.MSELoss()
@@ -48,8 +49,31 @@ def train_autoencoder(dataset, num_epochs=1, learning_rate=1e-3, batch_size=32):
     return stroke_encoder
 
 
+def autoencoder_verify(model, dataset, model_name="stroke_encoder"):
+    model.eval() 
+    device = next(model.parameters()).device  
+
+    sample = dataset[0] 
+    original_image = sample['stroke_image'].unsqueeze(0).to(device)  
+
+    with torch.no_grad():
+        reconstructed_image = model(original_image)['output_recons']
+
+    original_image_pil = TF.to_pil_image(original_image.squeeze(0).cpu())
+    reconstructed_image_pil = TF.to_pil_image(reconstructed_image.squeeze(0).cpu())
+
+    output_dir = os.path.join(preprocessing.io_utils.home_dir, "output", model_name + "_check")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    original_image_pil.save(os.path.join(output_dir, "original_image.png"))
+    reconstructed_image_pil.save(os.path.join(output_dir, "reconstructed_image.png"))
+    print(f"Images saved to {output_dir}")
+
+
 
 dataset = preprocessing.preprocess.get_stroke_dataset()
-train_autoencoder(dataset)
 
+stroke_encoder = train_autoencoder(dataset)
 
+autoencoder_verify(stroke_encoder, dataset)
