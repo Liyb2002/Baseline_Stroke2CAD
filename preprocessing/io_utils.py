@@ -19,6 +19,7 @@ def stroke_collate(batch):
     batched_images = default_collate(stroke_images)
     return CAD_Programs, batched_images
 
+
 def save_model(model, model_name="model"):
     save_dir = os.path.join(home_dir, "output", model_name)
 
@@ -32,3 +33,13 @@ def save_model(model, model_name="model"):
     # Save the model
     torch.save(model.state_dict(), model_path)
     print(f"Model saved to {model_path}")
+
+
+def load_model(model, checkpoint_path):
+    if os.path.isfile(checkpoint_path):
+        print(f"Loaded model from {checkpoint_path}")
+        model.load_state_dict(torch.load(checkpoint_path))
+        return model
+    else:
+        print(f"No checkpoint found at {checkpoint_path}")
+        return None
