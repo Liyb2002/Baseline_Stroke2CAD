@@ -11,7 +11,7 @@ import preprocessing.io_utils
 import models.autoencoder
 
 
-def train_autoencoder(dataset, num_epochs=1, learning_rate=5e-4, batch_size=32):
+def train_autoencoder(dataset, num_epochs=3, learning_rate=5e-4, batch_size=32):
     
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
