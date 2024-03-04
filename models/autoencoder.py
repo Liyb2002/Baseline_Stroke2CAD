@@ -9,7 +9,7 @@ class AutoencoderEmbed(nn.Module):
         # Encoder
         self.encoder = nn.Sequential(
             # Replace with CoordConv if available
-            nn.Conv2d(1, root_feature, kernel_size=3, padding=1),
+            nn.Conv2d(3, root_feature, kernel_size=3, padding=1),
             nn.BatchNorm2d(root_feature),
             nn.ReLU(),
             nn.MaxPool2d(2),
@@ -69,7 +69,7 @@ class AutoencoderEmbed(nn.Module):
             nn.ReLU(),
             nn.ConvTranspose2d(root_feature, root_feature, kernel_size=2, stride=2),
 
-            nn.Conv2d(root_feature, 1, kernel_size=1, padding=0)
+            nn.Conv2d(root_feature, 3, kernel_size=1, padding=0)
         )
 
     def forward(self, x):
