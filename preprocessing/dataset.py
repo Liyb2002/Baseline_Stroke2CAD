@@ -18,9 +18,12 @@ class StrokeDataset(Dataset):
         self.data_path = data_path
         self.CAD_stroke_pairs = self.get_files(data_path)
 
-        self.transform = transforms.Compose([
-            transforms.ToTensor(),
-        ])
+    transform = transforms.Compose([
+        transforms.Grayscale(num_output_channels=1), 
+        transforms.Resize((256, 256)),              
+        transforms.ToTensor(),                     
+        transforms.Normalize((0.5,), (0.5,))    
+    ])
 
 
     def __len__(self):
@@ -32,7 +35,7 @@ class StrokeDataset(Dataset):
         CAD_Program = item['CAD_Program']
         stroke_image_path = item['npr_image']
 
-        stroke_image = Image.open(stroke_image_path).convert('RGB') 
+        stroke_image = Image.open(stroke_image_path).convert('L') 
         if self.transform:
             stroke_image = self.transform(stroke_image)
         
