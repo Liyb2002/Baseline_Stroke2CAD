@@ -53,6 +53,7 @@ class AutoencoderEmbed(nn.Module):
         # Encoder
         self.encoder = nn.Sequential(
             CoordConv(x_dim, y_dim, root_feature),
+            # nn.Conv2d(1, root_feature, kernel_size=(3,3), padding=1),
             nn.MaxPool2d(2,2),
 
             nn.Conv2d(root_feature, root_feature * 2, kernel_size=(3,3), padding=1),
