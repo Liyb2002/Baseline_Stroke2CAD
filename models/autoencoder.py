@@ -108,7 +108,6 @@ class AutoencoderEmbed(nn.Module):
             nn.ReLU(),
             nn.ConvTranspose2d(root_feature * 2, root_feature, kernel_size=(2,2), stride=2),
 
-
             nn.ConvTranspose2d(root_feature, 1, kernel_size=(2,2), stride=2),
             nn.Sigmoid()
 

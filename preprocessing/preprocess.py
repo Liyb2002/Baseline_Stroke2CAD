@@ -6,7 +6,7 @@ from preprocessing.dataset import StrokeDataset
 
 
 def get_stroke_dataset():
-    data_filepath = home_dir / "dataset"
+    data_filepath = home_dir / "dataset" / "CAD2Sketch"
     sample_chaeck_folder = home_dir /"output"/"sampled_check_data"
 
     stroke_dataset = StrokeDataset(data_filepath)
