@@ -9,7 +9,7 @@ from torchvision import transforms
 import numpy as np
 
 
-from preprocessing.io_utils import read_json_file
+from io_utils import read_json_file
 import matplotlib.pyplot as plt
 
 
@@ -45,7 +45,7 @@ class StrokeDataset(Dataset):
     def get_files(self, data_path):
         CAD_stroke_pairs = []
         if not os.path.exists(data_path):
-            print("sad data_path", data_path)
+            print("cannot find data_path", data_path)
 
         if os.path.exists(data_path):
             sub_folders = [d for d in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, d))]
