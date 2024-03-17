@@ -20,6 +20,14 @@ def stroke_collate(batch):
     return CAD_Programs, batched_images
 
 
+def stroke_cloud_collate(batch):
+    CAD_Programs = [item[0] for item in batch]
+    final_edges_list = [item[1] for item in batch]
+
+    return CAD_Programs, final_edges_list
+
+
+
 def save_model(model, model_name="model"):
     save_dir = os.path.join(home_dir, "output", model_name)
 

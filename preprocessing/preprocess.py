@@ -1,10 +1,10 @@
 import json
 import os
 
-from io_utils import home_dir
-from dataset import StrokeDataset
-from stroke_cloud import Stroke_Cloud_Dataset
-from opensketch_dataset import opensketch_dataset
+from preprocessing.io_utils import home_dir
+from preprocessing.dataset import StrokeDataset
+from preprocessing.stroke_cloud import Stroke_Cloud_Dataset
+from preprocessing.opensketch_dataset import opensketch_dataset
 
 def get_stroke_dataset():
     data_filepath = home_dir / "dataset" / "CAD2Sketch"
@@ -26,4 +26,5 @@ def get_stroke_cloud():
     data_filepath = home_dir / "dataset" / "CAD2Sketch"
     stroke_cloud_dataset = Stroke_Cloud_Dataset(data_filepath)
 
-get_stroke_cloud()
+    return stroke_cloud_dataset
+

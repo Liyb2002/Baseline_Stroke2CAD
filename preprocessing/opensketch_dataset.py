@@ -9,7 +9,7 @@ from torchvision import transforms
 import numpy as np
 
 
-from io_utils import read_json_file
+from preprocessing.io_utils import read_json_file
 import matplotlib.pyplot as plt
 
 
