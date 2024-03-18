@@ -104,4 +104,7 @@ class StrokeToCADModel(nn.Module):
         stroke_embeddings = self.line_embedding_network(straight_strokes, curved_strokes)
         print("done embedding, stroke_embeddings shape", stroke_embeddings.shape)
         transformer_output = self.stroke_transformer(stroke_embeddings)
-        return transformer_output
+
+        probabilities = torch.softmax(transformer_output, dim=1)
+
+        return probabilities
