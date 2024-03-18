@@ -87,10 +87,9 @@ class StrokeTransformer(nn.Module):
 
 
     def forward(self, x):
-        x = x.permute(1, 0, 2)
+        x = x.unsqueeze(1)
         transformed = self.transformer_encoder(x)
-        x = transformed[0, :, :]
-        x = self.fc(x)
+        x = self.fc(transformed.squeeze(1))
 
         return x
 
@@ -99,10 +98,10 @@ class StrokeToCADModel(nn.Module):
     def __init__(self, num_classes):
         super(StrokeToCADModel, self).__init__()
         self.line_embedding_network = LineEmbeddingNetwork()
-        self.stroke_transformer = StrokeTransformer(256, num_classes)  
+        self.stroke_transformer = StrokeTransformer( num_features = 128, num_classes = num_classes)  
 
     def forward(self, straight_strokes, curved_strokes):
         stroke_embeddings = self.line_embedding_network(straight_strokes, curved_strokes)
-        print("done embedding")
+        print("done embedding, stroke_embeddings shape", stroke_embeddings.shape)
         transformer_output = self.stroke_transformer(stroke_embeddings)
         return transformer_output
