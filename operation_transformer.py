@@ -1,22 +1,32 @@
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 import torch.optim as optim
 import torch.nn as nn
+from tqdm import tqdm 
 
 import preprocessing.preprocess
 import models.stroke_cloud_transformer
 import data_structure.stroke_class
 
-def operation_transformer(dataset, model, num_epochs=1, batch_size=2, learning_rate=1e-3):
+def operation_transformer(dataset, model, num_epochs=3, batch_size=16, learning_rate=1e-3):
 
-    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=preprocessing.io_utils.stroke_cloud_collate)
+    total_size = len(dataset)
+    train_size = int(0.8 * total_size) 
+    validation_size = total_size - train_size  
+
+    train_dataset, validation_dataset = random_split(dataset, [train_size, validation_size])
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=preprocessing.io_utils.stroke_cloud_collate)
+    validation_loader = DataLoader(validation_dataset, batch_size=batch_size, shuffle=False, collate_fn=preprocessing.io_utils.stroke_cloud_collate)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     criterion = nn.CrossEntropyLoss()
 
     for epoch in range(num_epochs):
         model.train()
-        for batch in data_loader:
+        total_train_loss = 0
+
+        for batch in tqdm(train_loader):
             CAD_Programs, final_edges= batch
 
             straight_strokes, curve_strokes = separate_strokes(final_edges) 
@@ -30,13 +40,17 @@ def operation_transformer(dataset, model, num_epochs=1, batch_size=2, learning_r
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+
+            total_train_loss += loss.item()
+        
+        avg_train_loss = total_train_loss / len(train_loader)
         
         model.eval()  
-        total_loss = 0
-        correct = 0
-        total = 0
+        total_val_loss = 0
+        total, correct = 0, 0
+
         with torch.no_grad():
-            for batch in data_loader:
+            for batch in tqdm(validation_loader):
                 CAD_Programs, final_edges = batch
                 straight_strokes, curve_strokes = separate_strokes(final_edges)
 
@@ -45,15 +59,15 @@ def operation_transformer(dataset, model, num_epochs=1, batch_size=2, learning_r
                 operation_types = torch.tensor(operation_types, dtype=torch.long)
 
                 loss = criterion(outputs, operation_types)
-                total_loss += loss.item()
+                total_val_loss += loss.item()
 
                 _, predicted = torch.max(outputs, 1)
                 total += operation_types.size(0)
                 correct += (predicted == operation_types).sum().item()
 
-        avg_loss = total_loss / len(data_loader)
+        avg_val_loss = total_val_loss / len(validation_loader)
         accuracy = 100 * correct / total
-        print(f'Epoch [{epoch+1}/{num_epochs}], Training Loss: {loss.item():.4f}, Validation Loss: {avg_loss:.4f}, Accuracy: {accuracy}%')
+        print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {avg_train_loss:.4f}, Validation Loss: {avg_val_loss:.4f}, accuracy: {accuracy:.4f}')
 
 
 

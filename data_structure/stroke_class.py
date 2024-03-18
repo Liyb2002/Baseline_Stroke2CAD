@@ -17,6 +17,8 @@ class StraightLine3D:
         self.point1 = points[1]
 
         self.operation_type = line_feature_to_id(data_block[keys[1]])
+        if self.operation_type == None:
+            print('data_block[keys[1]', data_block[keys[1]])
 
         self.feature_id = data_block[keys[2]]
 
@@ -45,7 +47,6 @@ class CurveLine3D:
         self.operation_type = line_feature_to_id(data_block[keys[1]])
         if self.operation_type == None:
             print("data_block[keys[1]]", data_block[keys[1]])
-        # print("operation_type", self.operation_type)
 
         self.feature_id = data_block[keys[2]]
 
