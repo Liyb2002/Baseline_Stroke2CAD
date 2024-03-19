@@ -18,8 +18,8 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('pe', pe)
 
     def forward(self, x, reset_positions):
-        seq_len, batch_size, _ = x.shape
-        pe = self.pe.unsqueeze(1).expand(-1, batch_size, -1) 
+        seq_len, _ = x.shape
+        pe = self.pe[:seq_len, :]   
 
         reset_positions = reset_positions.unsqueeze(-1) 
         pe = pe.masked_fill(reset_positions, 0)
@@ -27,7 +27,8 @@ class PositionalEncoding(nn.Module):
 
         x = x + pe_cumulative
         return x
- 
+
+
 
 class StraightLineEmbedding(nn.Module):
     def __init__(self, embedding_size = 128, max_len=5000):
@@ -41,6 +42,7 @@ class StraightLineEmbedding(nn.Module):
         x = F.relu(x)
         x = self.pos_encoder(x, reset_positions)
         return x
+
 
 
 class CurvedLineEmbedding(nn.Module):
@@ -78,6 +80,8 @@ class CurvedLineEmbedding(nn.Module):
         return curve
 
 
+
+
 class LineEmbeddingNetwork(nn.Module):
     def __init__(self):
         super(LineEmbeddingNetwork, self).__init__()
@@ -88,35 +92,41 @@ class LineEmbeddingNetwork(nn.Module):
         straight_features = [torch.tensor([line.point0, line.point1]).flatten() for line in straight_strokes]
         curved_features = [torch.tensor(line.points).flatten() for line in curved_strokes]
 
-        reset_positions_straight = self.create_reset_positions(straight_strokes)
-        reset_positions_curved = self.create_reset_positions(curved_strokes)
-
-        # Pad the sequences if necessary
         straight_features_padded = pad_sequence(straight_features, batch_first=True)
         curved_features_padded = pad_sequence(curved_features, batch_first=True)
 
-        # print("len straight_features", len(straight_features_padded))
-        # print("len curved_features", len(curved_features_padded))
+        straight_padded_length = straight_features_padded.size(0)
+        curved_padded_length = curved_features_padded.size(0)
+        reset_positions_straight = self.create_reset_positions(straight_strokes, straight_padded_length)
+        reset_positions_curved = self.create_reset_positions(curved_strokes, curved_padded_length)
 
-        straight_embedded = self.straight_line_embedding(straight_features_padded, straight_features_padded)
-        curved_embedded = self.curved_line_embedding(curved_features_padded, curved_features_padded)
+        straight_embedded = self.straight_line_embedding(straight_features_padded, reset_positions_straight)
+        curved_embedded = self.curved_line_embedding(curved_features_padded, reset_positions_curved )
 
         combined = torch.cat((straight_embedded, curved_embedded), dim=0)
         return combined
     
+
     def create_padding_mask(self, padded_sequences):
         mask = padded_sequences != 0
         return mask
 
 
-    def create_reset_positions(self, strokes):
-        reset_positions = [True]  
-        for stroke in strokes[:-1]: 
-            length = 2 if hasattr(stroke, 'point1') else len(stroke.points)
+    def create_reset_positions(self, strokes, padded_length):
+        reset_positions = [False] * padded_length
+        cumulative_length = 0
 
-            reset_positions.extend([False] * length) 
+        for stroke in strokes:
+            length = 2 if hasattr(stroke, 'point1') else len(stroke.points)
+            
+            if cumulative_length < padded_length:
+                reset_positions[cumulative_length] = True
+
+            cumulative_length += length
 
         return torch.tensor(reset_positions, dtype=torch.bool)
+
+
 
 
 class StrokeTransformer(nn.Module):
@@ -133,6 +143,8 @@ class StrokeTransformer(nn.Module):
         x = self.fc(transformed.squeeze(1))
 
         return x
+
+
 
 
 class StrokeToCADModel(nn.Module):
