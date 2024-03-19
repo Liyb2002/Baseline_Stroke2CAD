@@ -67,7 +67,7 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=16, learning_
 
         avg_val_loss = total_val_loss / len(validation_loader)
         accuracy = 100 * correct / total
-        print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {avg_train_loss:.4f}, Validation Loss: {avg_val_loss:.4f}, accuracy: {accuracy:.4f}')
+        print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {avg_train_loss:.4f}, Validation Loss: {avg_val_loss:.4f}, Validation accuracy: {accuracy:.4f}')
 
 
 

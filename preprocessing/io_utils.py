@@ -11,13 +11,21 @@ def read_json_file(file_path):
     with open(file_path, 'r') as file:
         return json.load(file)
 
+def stroke_cloud_collate(batch):
+    CAD_Programs = [item[0] for item in batch]
+    final_edges_list = [item[1] for item in batch]
 
-def stroke_collate(batch):
-    CAD_Programs = [item['CAD_Program'] for item in batch]
-    stroke_images = [item['stroke_image'] for item in batch]
+    max_length = max(len(edges) for edges in final_edges_list)
 
-    batched_images = default_collate(stroke_images)
-    return CAD_Programs, batched_images
+    padded_final_edges_list = []
+    for edges in final_edges_list:
+        padding = [0] * (max_length - len(edges))
+        padded_edges = edges + padding
+        padded_final_edges_list.append(padded_edges)
+
+    padded_final_edges_tensor = torch.tensor(padded_final_edges_list, dtype=torch.float)
+    
+    return CAD_Programs, padded_final_edges_tensor
 
 
 def stroke_cloud_collate(batch):
