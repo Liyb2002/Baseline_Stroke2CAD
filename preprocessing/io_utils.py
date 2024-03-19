@@ -19,12 +19,12 @@ def stroke_cloud_collate(batch):
 
     padded_final_edges_list = []
     for edges in final_edges_list:
-        padding = [0] * (max_length - len(edges))
-        padded_edges = edges + padding
+        start_token = [-1] * 3  
+        padded_edges = start_token + edges + [0] * (max_length - len(edges))
         padded_final_edges_list.append(padded_edges)
 
     padded_final_edges_tensor = torch.tensor(padded_final_edges_list, dtype=torch.float)
-    
+
     return CAD_Programs, padded_final_edges_tensor
 
 

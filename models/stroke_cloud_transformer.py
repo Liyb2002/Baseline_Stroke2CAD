@@ -5,31 +5,60 @@ from torch.nn.utils.rnn import pad_sequence
 import random
 
 import numpy as np
+import data_structure.stroke_class
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model, max_len=5000):
+        super(PositionalEncoding, self).__init__()
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-np.log(10000.0) / d_model))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x, reset_positions):
+        seq_len, batch_size, _ = x.shape
+        pe = self.pe.unsqueeze(1).expand(-1, batch_size, -1) 
+
+        reset_positions = reset_positions.unsqueeze(-1) 
+        pe = pe.masked_fill(reset_positions, 0)
+        pe_cumulative = torch.cumsum(pe, dim=0)
+
+        x = x + pe_cumulative
+        return x
+ 
 
 class StraightLineEmbedding(nn.Module):
-    def __init__(self, embedding_size = 128):
+    def __init__(self, embedding_size = 128, max_len=5000):
         super(StraightLineEmbedding, self).__init__()
         self.fc1 = nn.Linear(6, embedding_size)
+        self.pos_encoder = PositionalEncoding(embedding_size, max_len)
 
-    def forward(self, x):
+
+    def forward(self, x, reset_positions):
         x = self.fc1(x)
         x = F.relu(x)
+        x = self.pos_encoder(x, reset_positions)
         return x
 
 
 class CurvedLineEmbedding(nn.Module):
-    def __init__(self, num_target_points = 10, embedding_size = 128):
+    def __init__(self, num_target_points = 10, embedding_size = 128, max_len=5000):
         super(CurvedLineEmbedding, self).__init__()
         self.num_target_points = num_target_points
         self.embedding_size = embedding_size
         self.fc = nn.Linear(num_target_points * 3, embedding_size)
+        self.pos_encoder = PositionalEncoding(embedding_size, max_len)
 
-    def forward(self, x):
+
+    def forward(self, x, reset_positions):
         processed_curves = torch.stack([self.process_curve(curve) for curve in x])
 
         flattened_curves = processed_curves.view(processed_curves.size(0), -1)
         embedded_curves = self.fc(flattened_curves)
         embedded_curves = F.relu(embedded_curves)
+        embedded_curves = self.pos_encoder(embedded_curves, reset_positions)
 
         return embedded_curves
 
@@ -59,6 +88,9 @@ class LineEmbeddingNetwork(nn.Module):
         straight_features = [torch.tensor([line.point0, line.point1]).flatten() for line in straight_strokes]
         curved_features = [torch.tensor(line.points).flatten() for line in curved_strokes]
 
+        reset_positions_straight = self.create_reset_positions(straight_strokes)
+        reset_positions_curved = self.create_reset_positions(curved_strokes)
+
         # Pad the sequences if necessary
         straight_features_padded = pad_sequence(straight_features, batch_first=True)
         curved_features_padded = pad_sequence(curved_features, batch_first=True)
@@ -66,8 +98,8 @@ class LineEmbeddingNetwork(nn.Module):
         # print("len straight_features", len(straight_features_padded))
         # print("len curved_features", len(curved_features_padded))
 
-        straight_embedded = self.straight_line_embedding(straight_features_padded)
-        curved_embedded = self.curved_line_embedding(curved_features_padded)
+        straight_embedded = self.straight_line_embedding(straight_features_padded, straight_features_padded)
+        curved_embedded = self.curved_line_embedding(curved_features_padded, curved_features_padded)
 
         combined = torch.cat((straight_embedded, curved_embedded), dim=0)
         return combined
@@ -76,6 +108,15 @@ class LineEmbeddingNetwork(nn.Module):
         mask = padded_sequences != 0
         return mask
 
+
+    def create_reset_positions(self, strokes):
+        reset_positions = [True]  
+        for stroke in strokes[:-1]: 
+            length = 2 if hasattr(stroke, 'point1') else len(stroke.points)
+
+            reset_positions.extend([False] * length) 
+
+        return torch.tensor(reset_positions, dtype=torch.bool)
 
 
 class StrokeTransformer(nn.Module):
