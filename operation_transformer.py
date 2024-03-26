@@ -7,8 +7,9 @@ from tqdm import tqdm
 import preprocessing.preprocess
 import models.stroke_cloud_transformer
 import data_structure.stroke_class
+import onshape.parse_CAD
 
-def operation_transformer(dataset, model, num_epochs=3, batch_size=16, learning_rate=1e-3):
+def operation_transformer(dataset, model, num_epochs=3, batch_size=1, learning_rate=1e-3):
 
     total_size = len(dataset)
     train_size = int(0.8 * total_size) 
@@ -27,10 +28,17 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=16, learning_
         total_train_loss = 0
 
         for batch in tqdm(train_loader):
-            CAD_Programs, final_edges= batch
+            CAD_Program_path, final_edges= batch
 
             straight_strokes, curve_strokes = separate_strokes(final_edges) 
+            parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
+            operation = parsed_CAD_program[0]['sequence'][0]['type']
+            operation_id = onshape.parse_CAD.operation_to_id(operation)
+            print("operation", operation)
+
+
             outputs = model(straight_strokes, curve_strokes)
+            print("outputs", outputs)
 
             operation_types = [stroke.operation_type for stroke in straight_strokes + curve_strokes]
             operation_types = torch.tensor(operation_types, dtype=torch.long)
@@ -93,8 +101,9 @@ def separate_strokes(final_edges):
     return straight_strokes, curve_strokes
 
 
-
-
 stroke_cloud_dataset = preprocessing.preprocess.get_stroke_cloud()
-model = models.stroke_cloud_transformer.StrokeToCADModel(7)
+model = models.stroke_cloud_transformer.StrokeToCADModel()
+# device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+# model.to(device)
+
 operation_transformer(stroke_cloud_dataset, model)

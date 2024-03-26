@@ -30,13 +30,11 @@ class Stroke_Cloud_Dataset(Dataset):
             if not os.path.exists(CAD_path):
                     continue
 
-            CAD_Program = read_json_file(CAD_path)
-
             stroke_folders = [d for d in os.listdir(sub_folder_path) if os.path.isdir(os.path.join(sub_folder_path, d))]
             for stroke_folder in stroke_folders:
                 final_edges_path = os.path.join(sub_folder_path, stroke_folder, 'final_edges.json')
                 if os.path.exists(final_edges_path):
                     final_edges = read_json_file(final_edges_path)
-                    CAD_stroke_pairs.append({'CAD_Program': CAD_Program, 'final_edges': final_edges})
+                    CAD_stroke_pairs.append({'CAD_Program': CAD_path, 'final_edges': final_edges})
 
         return CAD_stroke_pairs

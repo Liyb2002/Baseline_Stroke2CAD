@@ -10,6 +10,9 @@ home_dir = Path(__file__).parent.parent
 def read_json_file(file_path):
     with open(file_path, 'r') as file:
         return json.load(file)
+    
+
+#---------------------------------------------------------------------#
 
 def stroke_cloud_collate(batch):
     CAD_Programs = [item[0] for item in batch]
@@ -35,7 +38,7 @@ def stroke_cloud_collate(batch):
     return CAD_Programs, final_edges_list
 
 
-
+#---------------------------------------------------------------------#
 def save_model(model, model_name="model"):
     save_dir = os.path.join(home_dir, "output", model_name)
 

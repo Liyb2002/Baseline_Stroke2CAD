@@ -5,7 +5,6 @@ from torch.nn.utils.rnn import pad_sequence
 import random
 
 import numpy as np
-import data_structure.stroke_class
 
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_len=5000):
@@ -129,35 +128,46 @@ class LineEmbeddingNetwork(nn.Module):
 
 
 
-class StrokeTransformer(nn.Module):
-    def __init__(self, num_features, num_classes, num_layers=3, num_heads=4):
-        super(StrokeTransformer, self).__init__()
-        self.encoder_layers = nn.TransformerEncoderLayer(d_model=num_features, nhead=num_heads)
-        self.transformer_encoder = nn.TransformerEncoder(self.encoder_layers, num_layers=num_layers)
-        self.fc = nn.Linear(num_features, num_classes)
-
-
-    def forward(self, x):
-        x = x.unsqueeze(1)
-        transformed = self.transformer_encoder(x)
-        x = self.fc(transformed.squeeze(1))
-
-        return x
-
-
-
-
 class StrokeToCADModel(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, embedding_size = 128, 
+                 num_layers = 6 , num_heads = 8 , hidden_size = 512, 
+                 vocab_size = 7, max_seq_length = 1000, dropout=0.1):
         super(StrokeToCADModel, self).__init__()
-        self.line_embedding_network = LineEmbeddingNetwork()
-        self.stroke_transformer = StrokeTransformer( num_features = 128, num_classes = num_classes)  
+        self.embedding_size = embedding_size
+        self.num_layers = num_layers
+        self.num_heads = num_heads
+        self.hidden_size = hidden_size
+        self.vocab_size = vocab_size
+        self.max_seq_length = max_seq_length
+        self.dropout = dropout
 
-    def forward(self, straight_strokes, curved_strokes):
-        stroke_embeddings = self.line_embedding_network(straight_strokes, curved_strokes)
-        # print("done embedding, stroke_embeddings shape", stroke_embeddings.shape)
-        transformer_output = self.stroke_transformer(stroke_embeddings)
+        self.embedding = LineEmbeddingNetwork()
+        self.transformer_layers = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(embedding_size, num_heads, hidden_size, dropout),
+            num_layers
+        )
+        self.fc = nn.Linear(embedding_size, vocab_size)
 
-        probabilities = torch.softmax(transformer_output, dim=1)
+    def forward(self, straight_strokes, curved_strokes, target_operation=None):
+        stroke_embedding = self.embedding(straight_strokes, curved_strokes)
 
-        return probabilities
+        encoder_output = self.transformer_layers(stroke_embedding)
+
+        output = self.fc(encoder_output[-1])
+
+        if target_operation is not None:
+            loss = nn.CrossEntropyLoss()(output.unsqueeze(0), target_operation.unsqueeze(0))
+            return loss
+        else:
+            return output
+
+    def predict_next_operation(self, straight_strokes, curved_strokes):
+        stroke_embedding = self.embedding(straight_strokes, curved_strokes)
+
+        encoder_output = self.transformer_layers(stroke_embedding)
+
+        output = self.fc(encoder_output[-1])
+
+        predicted_operation = output.argmax(dim=-1)
+
+        return predicted_operation
