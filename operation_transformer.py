@@ -23,6 +23,8 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=1, learning_r
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     criterion = nn.CrossEntropyLoss()
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     for epoch in range(num_epochs):
         model.train()
         total_train_loss = 0
@@ -32,18 +34,14 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=1, learning_r
 
             straight_strokes, curve_strokes = separate_strokes(final_edges) 
             parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
-            operation = parsed_CAD_program[0]['sequence'][0]['type']
-            operation_id = onshape.parse_CAD.operation_to_id(operation)
-            print("operation", operation)
 
+            operations = [program['sequence'][0]['type'] for program in parsed_CAD_program]
+            operation_ids = [onshape.parse_CAD.operation_to_id(operation) for operation in operations] 
+            target_operation = torch.tensor(operation_ids[0])
 
             outputs = model(straight_strokes, curve_strokes)
-            print("outputs", outputs)
 
-            operation_types = [stroke.operation_type for stroke in straight_strokes + curve_strokes]
-            operation_types = torch.tensor(operation_types, dtype=torch.long)
-
-            loss = criterion(outputs, operation_types)
+            loss = criterion(outputs.unsqueeze(0), target_operation.unsqueeze(0))
 
             optimizer.zero_grad()
             loss.backward()
@@ -52,30 +50,30 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=1, learning_r
             total_train_loss += loss.item()
         
         avg_train_loss = total_train_loss / len(train_loader)
-        
-        model.eval()  
-        total_val_loss = 0
-        total, correct = 0, 0
+        print(f"Epoch [{epoch+1}/{num_epochs}], Train Loss: {avg_train_loss:.4f}")
+
+        model.eval()
+        total_validation_loss = 0
 
         with torch.no_grad():
             for batch in tqdm(validation_loader):
-                CAD_Programs, final_edges = batch
+                CAD_Program_path, final_edges = batch
                 straight_strokes, curve_strokes = separate_strokes(final_edges)
+                parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
+                operations = [program['sequence'][0]['type'] for program in parsed_CAD_program]
+                operation_ids = [onshape.parse_CAD.operation_to_id(operation) for operation in operations]
+
+                straight_strokes = straight_strokes
+                curve_strokes = curve_strokes
+                target_operation = torch.tensor(operation_ids[0])
 
                 outputs = model(straight_strokes, curve_strokes)
-                operation_types = [stroke.operation_type for stroke in straight_strokes + curve_strokes]
-                operation_types = torch.tensor(operation_types, dtype=torch.long)
+                loss = criterion(outputs.unsqueeze(0), target_operation.unsqueeze(0))
 
-                loss = criterion(outputs, operation_types)
-                total_val_loss += loss.item()
+                total_validation_loss += loss.item()
 
-                _, predicted = torch.max(outputs, 1)
-                total += operation_types.size(0)
-                correct += (predicted == operation_types).sum().item()
-
-        avg_val_loss = total_val_loss / len(validation_loader)
-        accuracy = 100 * correct / total
-        print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {avg_train_loss:.4f}, Validation Loss: {avg_val_loss:.4f}, Validation accuracy: {accuracy:.4f}')
+        avg_validation_loss = total_validation_loss / len(validation_loader)
+        print(f"Epoch [{epoch+1}/{num_epochs}], Validation Loss: {avg_validation_loss:.4f}")
 
 
 
@@ -103,7 +101,7 @@ def separate_strokes(final_edges):
 
 stroke_cloud_dataset = preprocessing.preprocess.get_stroke_cloud()
 model = models.stroke_cloud_transformer.StrokeToCADModel()
-# device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-# model.to(device)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
 
 operation_transformer(stroke_cloud_dataset, model)

@@ -131,7 +131,7 @@ class LineEmbeddingNetwork(nn.Module):
 class StrokeToCADModel(nn.Module):
     def __init__(self, embedding_size = 128, 
                  num_layers = 6 , num_heads = 8 , hidden_size = 512, 
-                 vocab_size = 7, max_seq_length = 1000, dropout=0.1):
+                 vocab_size = 3, max_seq_length = 1000, dropout=0.1):
         super(StrokeToCADModel, self).__init__()
         self.embedding_size = embedding_size
         self.num_layers = num_layers
