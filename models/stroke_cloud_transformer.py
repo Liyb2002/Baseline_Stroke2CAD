@@ -166,7 +166,7 @@ class StrokeToCADModel(nn.Module):
 
         encoder_output = self.transformer_layers(stroke_embedding)
 
-        output = self.fc(encoder_output[-1])
+        output = self.fc(encoder_output[0])
 
         predicted_operation = output.argmax(dim=-1)
 

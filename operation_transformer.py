@@ -68,6 +68,9 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=1, learning_r
                 target_operation = torch.tensor(operation_ids[0])
 
                 outputs = model(straight_strokes, curve_strokes)
+                # predicted_operation = torch.argmax(outputs)
+                # print(f"Predicted Operation: {predicted_operation}")
+
                 loss = criterion(outputs.unsqueeze(0), target_operation.unsqueeze(0))
 
                 total_validation_loss += loss.item()
