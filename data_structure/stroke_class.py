@@ -2,6 +2,7 @@
 class StraightLine3D:
     def __init__(self, data_block):
         self.clean_data(data_block)
+        self.type = 'straight_stroke'
 
     def __repr__(self):
         return f"StraightLine3D({self.point0}, {self.point1}, '{self.operation_type}', {self.line_id})"
@@ -32,6 +33,7 @@ class StraightLine3D:
 class CurveLine3D:
     def __init__(self, data_block):
         self.clean_data(data_block)
+        self.type = 'curve_stroke'
 
     def __repr__(self):
         return f"CurveLine3D({self.points} '{self.operation_type}', {self.line_id})"

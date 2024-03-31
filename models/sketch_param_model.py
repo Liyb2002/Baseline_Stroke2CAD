@@ -30,8 +30,8 @@ class SketchPredictor(nn.Module):
         self.fc_out = nn.Linear(hidden_size + gnn_hidden_size, 1)
 
 
-    def forward(self, straight_strokes, curved_strokes, adjacency_matrix):
-        stroke_embedding = self.embedding(straight_strokes, curved_strokes)
+    def forward(self, strokes, adjacency_matrix):
+        stroke_embedding = self.embedding(strokes)
 
         transformer_output = self.transformer_layers(stroke_embedding)
 

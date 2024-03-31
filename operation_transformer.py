@@ -30,16 +30,16 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=1, learning_r
         total_train_loss = 0
 
         for batch in tqdm(train_loader):
-            CAD_Program_path, final_edges, strokes_dict_path= batch
+            CAD_Program_path, final_edges, _= batch
 
-            straight_strokes, curve_strokes = separate_strokes(final_edges) 
+            stroke_objects = separate_strokes_keep_order(final_edges)
             parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
 
             operations = [program['sequence'][0]['type'] for program in parsed_CAD_program]
             operation_ids = [onshape.parse_CAD.operation_to_id(operation) for operation in operations] 
             target_operation = torch.tensor(operation_ids[0])
 
-            outputs = model(straight_strokes, curve_strokes)
+            outputs = model(stroke_objects)
 
             loss = criterion(outputs.unsqueeze(0), target_operation.unsqueeze(0))
 
@@ -58,16 +58,15 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=1, learning_r
         with torch.no_grad():
             for batch in tqdm(validation_loader):
                 CAD_Program_path, final_edges, strokes_dict_path= batch
-                straight_strokes, curve_strokes = separate_strokes(final_edges)
+                # straight_strokes, curve_strokes = separate_strokes(final_edges)
+                stroke_objects = separate_strokes_keep_order(final_edges)
                 parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
                 operations = [program['sequence'][0]['type'] for program in parsed_CAD_program]
                 operation_ids = [onshape.parse_CAD.operation_to_id(operation) for operation in operations]
 
-                straight_strokes = straight_strokes
-                curve_strokes = curve_strokes
                 target_operation = torch.tensor(operation_ids[0])
 
-                outputs = model(straight_strokes, curve_strokes)
+                outputs = model(stroke_objects)
                 # predicted_operation = torch.argmax(outputs)
                 # print(f"Predicted Operation: {predicted_operation}")
 
@@ -80,6 +79,7 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=1, learning_r
 
 
 def separate_strokes_keep_order(final_edges):
+    print("len(final_edges)", len(final_edges))
     final_strokes = []
 
     for combined in final_edges:
@@ -96,6 +96,7 @@ def separate_strokes_keep_order(final_edges):
             else:
                 final_strokes.append(data_structure.stroke_class.CurveLine3D(data_block))
     
+    print("len(final_strokes)", len(final_strokes))
     return final_strokes
 
 

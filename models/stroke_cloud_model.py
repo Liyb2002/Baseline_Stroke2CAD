@@ -87,7 +87,16 @@ class LineEmbeddingNetwork(nn.Module):
         self.straight_line_embedding = StraightLineEmbedding()
         self.curved_line_embedding = CurvedLineEmbedding()
 
-    def forward(self, straight_strokes, curved_strokes):        
+    def forward(self, strokes):        
+
+        straight_strokes = []
+        curved_strokes = []
+        for stroke in strokes:
+            if stroke.type == 'straight_stroke':
+                straight_strokes.append(stroke)
+            else:
+                curved_strokes.append(stroke)
+
         straight_features = [torch.tensor([line.point0, line.point1]).flatten() for line in straight_strokes]
         curved_features = [torch.tensor(line.points).flatten() for line in curved_strokes]
 
@@ -148,8 +157,8 @@ class StrokeToCADModel(nn.Module):
         )
         self.fc = nn.Linear(embedding_size, vocab_size)
 
-    def forward(self, straight_strokes, curved_strokes, target_operation=None):
-        stroke_embedding = self.embedding(straight_strokes, curved_strokes)
+    def forward(self, strokes, target_operation=None):
+        stroke_embedding = self.embedding(strokes)
 
         encoder_output = self.transformer_layers(stroke_embedding)
 
