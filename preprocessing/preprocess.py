@@ -7,6 +7,7 @@ from preprocessing.stroke_cloud import Stroke_Cloud_Dataset
 from preprocessing.opensketch_dataset import opensketch_dataset
 
 def get_stroke_dataset():
+    #preparing with images
     data_filepath = home_dir / "dataset" / "CAD2Sketch"
     sample_chaeck_folder = home_dir /"output"/"sampled_check_data"
     openSketch_data_filepath = home_dir / "dataset" / "sketches_json_first_viewpoint"
@@ -23,6 +24,7 @@ def get_stroke_dataset():
 
 
 def get_stroke_cloud():
+    #pairing with stroke cloud (3d strokes)
     data_filepath = home_dir / "dataset" / "CAD2Sketch"
     stroke_cloud_dataset = Stroke_Cloud_Dataset(data_filepath)
 

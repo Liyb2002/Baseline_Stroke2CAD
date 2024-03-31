@@ -30,7 +30,7 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=1, learning_r
         total_train_loss = 0
 
         for batch in tqdm(train_loader):
-            CAD_Program_path, final_edges= batch
+            CAD_Program_path, final_edges, strokes_dict_path= batch
 
             straight_strokes, curve_strokes = separate_strokes(final_edges) 
             parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
@@ -57,7 +57,7 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=1, learning_r
 
         with torch.no_grad():
             for batch in tqdm(validation_loader):
-                CAD_Program_path, final_edges = batch
+                CAD_Program_path, final_edges, strokes_dict_path= batch
                 straight_strokes, curve_strokes = separate_strokes(final_edges)
                 parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
                 operations = [program['sequence'][0]['type'] for program in parsed_CAD_program]
@@ -78,6 +78,25 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=1, learning_r
         avg_validation_loss = total_validation_loss / len(validation_loader)
         print(f"Epoch [{epoch+1}/{num_epochs}], Validation Loss: {avg_validation_loss:.4f}")
 
+
+def separate_strokes_keep_order(final_edges):
+    final_strokes = []
+
+    for combined in final_edges:
+
+        for key in combined:
+            data_block = combined[key]
+            
+            per_stroke_keys = []
+            for per_stroke_key in data_block:
+                per_stroke_keys.append(per_stroke_key)
+            
+            if len(data_block[per_stroke_keys[0]]) == 2:            
+                final_strokes.append(data_structure.stroke_class.StraightLine3D(data_block))
+            else:
+                final_strokes.append(data_structure.stroke_class.CurveLine3D(data_block))
+    
+    return final_strokes
 
 
 def separate_strokes(final_edges):

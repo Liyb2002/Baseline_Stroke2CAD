@@ -31,12 +31,14 @@ def sketch_param_transformer(dataset, num_epochs=3, batch_size=1, learning_rate=
         total_train_loss = 0
 
         for batch in tqdm(train_loader):
-            CAD_Program_path, final_edges= batch
+            CAD_Program_path, final_edges, strokes_dict_path = batch
 
-            straight_strokes, curve_strokes = operation_transformer.separate_strokes(final_edges) 
+            stroke_objects = operation_transformer.separate_strokes_keep_order(final_edges) 
 
-            connectivity_matrix = preprocessing.stroke_graph.build_connectivity_matrix(straight_strokes, curve_strokes)
+            connectivity_matrix = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path)
+
             parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
+            
             entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
 
             # print("first sketch", entity_info[0])
