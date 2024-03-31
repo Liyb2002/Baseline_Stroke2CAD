@@ -5,7 +5,7 @@ import torch.nn as nn
 from tqdm import tqdm 
 
 import preprocessing.preprocess
-import models.stroke_cloud_transformer
+import models.stroke_cloud_model
 import data_structure.stroke_class
 import onshape.parse_CAD
 
