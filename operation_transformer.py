@@ -103,7 +103,7 @@ def separate_strokes(final_edges):
 
 
 stroke_cloud_dataset = preprocessing.preprocess.get_stroke_cloud()
-model = models.stroke_cloud_transformer.StrokeToCADModel()
+model = models.stroke_cloud_model.StrokeToCADModel()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 

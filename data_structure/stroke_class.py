@@ -4,7 +4,7 @@ class StraightLine3D:
         self.clean_data(data_block)
 
     def __repr__(self):
-        return f"StraightLine3D({self.point1}, {self.point2}, '{self.operation_type}', {self.line_id})"
+        return f"StraightLine3D({self.point0}, {self.point1}, '{self.operation_type}', {self.line_id})"
 
     def clean_data(self,data_block):
 

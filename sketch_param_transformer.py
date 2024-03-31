@@ -5,10 +5,11 @@ import torch.nn as nn
 from tqdm import tqdm 
 
 import preprocessing.preprocess
-import models.stroke_cloud_transformer
+import models.sketch_param_model
 import data_structure.stroke_class
 import onshape.parse_CAD
 import operation_transformer
+import preprocessing.stroke_graph
 
 def sketch_param_transformer(dataset, num_epochs=3, batch_size=1, learning_rate=1e-3):
     total_size = len(dataset)
@@ -33,12 +34,13 @@ def sketch_param_transformer(dataset, num_epochs=3, batch_size=1, learning_rate=
             CAD_Program_path, final_edges= batch
 
             straight_strokes, curve_strokes = operation_transformer.separate_strokes(final_edges) 
+
+            connectivity_matrix = preprocessing.stroke_graph.build_connectivity_matrix(straight_strokes, curve_strokes)
             parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
             entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
 
-            print("first sketch", entity_info[0])
+            # print("first sketch", entity_info[0])
             break
-
 
 
 
