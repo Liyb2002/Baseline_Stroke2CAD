@@ -7,7 +7,7 @@ class Stroke_Cloud_Dataset(Dataset):
     def __init__(self, data_path):
         self.data_path = data_path
         self.CAD_stroke_pairs = self.get_files(data_path)
-        print("len(self.CAD_stroke_pairs)", len(self.CAD_stroke_pairs))
+        # print("len(self.CAD_stroke_pairs)", len(self.CAD_stroke_pairs))
 
     def __len__(self):
         return len(self.CAD_stroke_pairs)

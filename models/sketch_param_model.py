@@ -31,6 +31,8 @@ class SketchPredictor(nn.Module):
 
 
     def forward(self, strokes, adjacency_matrix):
+        print("num strokes", len(strokes))
+        print("adjacency_matrix", adjacency_matrix.shape)
         stroke_embedding = self.embedding(strokes)
 
         transformer_output = self.transformer_layers(stroke_embedding)

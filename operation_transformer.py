@@ -79,7 +79,6 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=1, learning_r
 
 
 def separate_strokes_keep_order(final_edges):
-    print("len(final_edges)", len(final_edges))
     final_strokes = []
 
     for combined in final_edges:
@@ -96,7 +95,6 @@ def separate_strokes_keep_order(final_edges):
             else:
                 final_strokes.append(data_structure.stroke_class.CurveLine3D(data_block))
     
-    print("len(final_strokes)", len(final_strokes))
     return final_strokes
 
 
@@ -122,9 +120,12 @@ def separate_strokes(final_edges):
     return straight_strokes, curve_strokes
 
 
-stroke_cloud_dataset = preprocessing.preprocess.get_stroke_cloud()
-model = models.stroke_cloud_model.StrokeToCADModel()
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
+def train_operation_transformer():
+    stroke_cloud_dataset = preprocessing.preprocess.get_stroke_cloud()
+    model = models.stroke_cloud_model.StrokeToCADModel()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
 
-operation_transformer(stroke_cloud_dataset, model)
+    operation_transformer(stroke_cloud_dataset, model)
+
+# train_operation_transformer()
