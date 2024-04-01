@@ -37,9 +37,7 @@ def sketch_param_transformer(dataset, model, num_epochs=3, batch_size=1, learnin
             connectivity_matrix = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects)
 
             optimizer.zero_grad()
-            print("num_strokes", len(stroke_objects))
             output_probabilities = model(stroke_objects, connectivity_matrix)
-            print("num_strokes", len(stroke_objects), "output_probabilities", output_probabilities.shape)
 
             parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
             

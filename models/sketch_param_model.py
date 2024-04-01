@@ -8,7 +8,7 @@ import models.stroke_cloud_model
 class SketchPredictor(nn.Module):
     def __init__(self, embedding_size = 128, 
                  num_layers = 6 , num_heads = 8 , 
-                 hidden_size = 512, gnn_hidden_size = 128, 
+                 hidden_size = 128, gnn_hidden_size = 128, 
                  max_seq_length = 1000, dropout=0.1):
         super(SketchPredictor, self).__init__()
         self.embedding_size = embedding_size
@@ -29,10 +29,7 @@ class SketchPredictor(nn.Module):
 
         self.fc_out = nn.Linear(hidden_size + gnn_hidden_size, 1)
 
-
     def forward(self, strokes, adjacency_matrix):
-        print("num strokes", len(strokes))
-        print("adjacency_matrix", adjacency_matrix.shape)
         stroke_embedding = self.embedding(strokes)
 
         transformer_output = self.transformer_layers(stroke_embedding)
