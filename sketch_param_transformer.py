@@ -11,7 +11,7 @@ import onshape.parse_CAD
 import operation_transformer
 import preprocessing.stroke_graph
 
-def sketch_param_transformer(dataset, model, num_epochs=3, batch_size=1, learning_rate=1e-3):
+def sketch_param_transformer(dataset, model, num_epochs=1, batch_size=1, learning_rate=1e-3):
     total_size = len(dataset)
     train_size = int(0.8 * total_size) 
     validation_size = total_size - train_size  
@@ -38,12 +38,14 @@ def sketch_param_transformer(dataset, model, num_epochs=3, batch_size=1, learnin
 
             optimizer.zero_grad()
             output_probabilities = model(stroke_objects, connectivity_matrix)
+            print("output_probabilities", output_probabilities.shape)
 
             parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
             
             entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
 
-            # print("first sketch", entity_info[0])
+            gt_labels = preprocessing.stroke_graph.build_gt_label(entity_info[0], stroke_objects)
+
             break
 
 

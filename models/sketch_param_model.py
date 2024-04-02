@@ -5,6 +5,16 @@ import torch_geometric.nn as geom_nn
 
 import models.stroke_cloud_model
 
+class CrossAttention(nn.Module):
+    def __init__(self, size, num_heads):
+        super(CrossAttention, self).__init__()
+        self.attention = nn.MultiheadAttention(embed_dim=size, num_heads=num_heads)
+
+    def forward(self, stroke_embeddings, graph_embeddings):
+        attended_output, _ = self.attention(stroke_embeddings, graph_embeddings, graph_embeddings)
+        return attended_output
+
+
 class SketchPredictor(nn.Module):
     def __init__(self, embedding_size = 128, 
                  num_layers = 6 , num_heads = 8 , 
@@ -22,22 +32,25 @@ class SketchPredictor(nn.Module):
         self.gnn = geom_nn.GCNConv(embedding_size, gnn_hidden_size)
 
 
+        self.cross_attention = CrossAttention(embedding_size, num_heads)
+
         self.transformer_layers = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(embedding_size, num_heads, hidden_size, dropout),
             num_layers
         )
 
-        self.fc_out = nn.Linear(hidden_size + gnn_hidden_size, 1)
+        self.fc_out = nn.Linear(hidden_size, 1)
 
     def forward(self, strokes, adjacency_matrix):
         stroke_embedding = self.embedding(strokes)
 
-        transformer_output = self.transformer_layers(stroke_embedding)
-
         gnn_output = self.gnn(stroke_embedding, adjacency_matrix)
 
-        combined_output = torch.cat([transformer_output, gnn_output], dim=-1)
+        cross_attended_output = self.cross_attention(stroke_embedding, gnn_output)
+
+        transformer_output = self.transformer_layers(cross_attended_output)
+
+        stroke_probabilities = torch.sigmoid(self.fc_out(transformer_output))
         
-        stroke_probabilities = torch.sigmoid(self.fc_out(combined_output))
         return stroke_probabilities
 

@@ -1,6 +1,11 @@
 import json
 import numpy as np
 import torch
+import math
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
 
 def build_connectivity_matrix(strokes_dict_path, stroke_objects):
 
@@ -26,7 +31,10 @@ def build_connectivity_matrix(strokes_dict_path, stroke_objects):
                         connectivity_matrix[stroke_index, intersected_index] = 1
                         connectivity_matrix[intersected_index, stroke_index] = 1
 
+    print("len(stroke_objects)", len(stroke_objects), connectivity_matrix.shape)
+
     connectivity_matrix = adjacency_matrix_to_edge_index(connectivity_matrix)
+
     return connectivity_matrix
 
 
@@ -38,4 +46,69 @@ def adjacency_matrix_to_edge_index(connectivity_matrix):
                 edge_index.append([i, j])
     return torch.tensor(edge_index).t().contiguous()
 
+
+def build_gt_label(entity_info, stroke_objects):
+    labels = np.zeros((len(stroke_objects), 1))
+
+    gts = []
+
+    for edge in entity_info['edges']:
+        edge_id = edge['edge_id']
+        edge_type = edge['edge_type']
+        edge_direction = edge['edge_direction']
+        edge_origin = edge['edge_origin']
+
+        gt_line = [edge_origin, edge_direction]
+
+        for stroke in stroke_objects:
+            if stroke.type == 'straight_stroke':
+
+                stroke_line = [stroke.point0, stroke.point1]
+
+                if same_line(gt_line, stroke_line):
+                    print("gt_line", gt_line)
+                    print("stroke_line", stroke_line)
+                    print("--------")
+
+
+    # plot_3D(gts)
+            
+
+def distance(point1, point2):
+    dist = math.sqrt(sum((a - b) ** 2 for a, b in zip(point1, point2)))
+    return dist
+
+def same_line(gt_line, target_line, threshold = 0.001):
+
+    #check if we have a correct point
+    correct_point = False
+    if distance(gt_line[0], target_line[0]) < threshold or distance(gt_line[0], target_line[1]) < threshold:
+        correct_point = True
+    
+    #check if we have a correct direction
+    correct_dir = False
+    dir_target_line = np.array([x - y for x,y in zip(target_line[0], target_line[1])])
+    normalized_dir_target_line = np.round(dir_target_line / np.linalg.norm(dir_target_line), 3)
+    invert_normalized_dir_target_line = [-x for x in normalized_dir_target_line]
+
+    if np.allclose(gt_line[1], normalized_dir_target_line) or np.allclose(gt_line[1], invert_normalized_dir_target_line):
+        correct_dir = True
+
+    return correct_point and correct_dir
+
+def plot_3D(lines):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    for line in lines:
+        x_coords = [point[0] for point in line]
+        y_coords = [point[1] for point in line]
+        z_coords = [point[2] for point in line]
+
+        ax.plot(x_coords, y_coords, z_coords, marker='o')
+
+    ax.set_xlabel('X axis')
+    ax.set_ylabel('Y axis')
+    ax.set_zlabel('Z axis')
+    plt.show()
 
