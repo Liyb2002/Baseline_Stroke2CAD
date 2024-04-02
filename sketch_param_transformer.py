@@ -61,14 +61,16 @@ def sketch_param_transformer(dataset, model, device, num_epochs=1, batch_size=1,
             for batch in validation_loader:
                 CAD_Program_path, final_edges, strokes_dict_path = batch
 
-                stroke_objects = operation_transformer.separate_strokes_keep_order(final_edges,device)
+                stroke_objects = operation_transformer.separate_strokes_keep_order(final_edges)
+                for stroke_obj in stroke_objects:
+                    stroke_obj.to_device(device)
+
                 connectivity_matrix = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects)
 
                 parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
                 entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
                 gt_labels = preprocessing.stroke_graph.build_gt_label(entity_info[0], stroke_objects)
-
-                stroke_objects, connectivity_matrix, gt_labels = stroke_objects.to(device), connectivity_matrix.to(device), gt_labels.to(device)
+                gt_labels = gt_labels.to(device)  
 
                 output_probabilities = model(stroke_objects, connectivity_matrix)
 
