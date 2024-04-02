@@ -20,7 +20,7 @@ class PositionalEncoding(nn.Module):
         seq_len, _ = x.shape
         pe = self.pe[:seq_len, :]   
 
-        reset_positions = reset_positions.unsqueeze(-1) 
+        reset_positions = reset_positions.to(pe.device).unsqueeze(-1) 
         pe = pe.masked_fill(reset_positions, 0)
         pe_cumulative = torch.cumsum(pe, dim=0)
 
@@ -97,8 +97,8 @@ class LineEmbeddingNetwork(nn.Module):
             else:
                 curved_strokes.append(stroke)
 
-        straight_features = [torch.tensor([line.point0, line.point1]).flatten() for line in straight_strokes]
-        curved_features = [torch.tensor(line.points).flatten() for line in curved_strokes]
+        straight_features = [torch.cat([line.point0, line.point1]) for line in straight_strokes]
+        curved_features = [line.points.flatten() for line in curved_strokes]
 
         straight_features_padded = pad_sequence(straight_features, batch_first=True)
         curved_features_padded = pad_sequence(curved_features, batch_first=True)

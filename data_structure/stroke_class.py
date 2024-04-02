@@ -1,3 +1,5 @@
+import torch
+
 
 class StraightLine3D:
     def __init__(self, data_block):
@@ -29,6 +31,12 @@ class StraightLine3D:
 
         self.line_id = data_block[keys[5]]
 
+    def to_device(self, device):
+        self.point0 = torch.tensor(self.point0, dtype=torch.float32)
+        self.point1 = torch.tensor(self.point1, dtype=torch.float32)
+        self.point0 = self.point0.to(device)
+        self.point1 = self.point1.to(device)
+
 
 class CurveLine3D:
     def __init__(self, data_block):
@@ -57,6 +65,11 @@ class CurveLine3D:
         self.visibility_score = data_block[keys[4]]
 
         self.line_id = data_block[keys[5]]
+
+    def to_device(self, device):
+        self.points = torch.tensor(self.points, dtype=torch.float32)
+        self.points = self.points.to(device)
+
 
 
 def line_feature_to_id(string):

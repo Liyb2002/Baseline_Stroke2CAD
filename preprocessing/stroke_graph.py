@@ -48,51 +48,39 @@ def adjacency_matrix_to_edge_index(connectivity_matrix):
 def build_gt_label(entity_info, stroke_objects):
     labels = torch.zeros((len(stroke_objects), 1), dtype=torch.float32)
 
-    for edge in entity_info['edges']:
-        edge_id = edge['edge_id']
-        edge_type = edge['edge_type']
-        edge_direction = edge['edge_direction']
-        edge_origin = edge['edge_origin']
+    def distance(point1, point2):
+        # Assuming point1 and point2 are numpy arrays or lists
+        point1, point2 = np.array(point1), np.array(point2)
+        return np.sqrt(np.sum((point1 - point2) ** 2))
 
-        if edge_type != 'Line':
-            print("edge_type", edge_type)
+    def same_line(gt_line, target_line, threshold=0.001):
+        # Convert points to numpy arrays if they are tensors
+        gt_line = [point.cpu().numpy() if isinstance(point, torch.Tensor) else np.array(point) for point in gt_line]
+        target_line = [point.cpu().numpy() if isinstance(point, torch.Tensor) else np.array(point) for point in target_line]
+
+        # Check if there is a correct point
+        if distance(gt_line[0], target_line[0]) < threshold or distance(gt_line[0], target_line[1]) < threshold:
+            # Check if there is a correct direction
+            dir_gt_line = np.round((gt_line[1] - gt_line[0]) / np.linalg.norm(gt_line[1] - gt_line[0]), 3)
+            dir_target_line = np.round((target_line[1] - target_line[0]) / np.linalg.norm(target_line[1] - target_line[0]), 3)
+            if np.allclose(dir_gt_line, dir_target_line) or np.allclose(dir_gt_line, -dir_target_line):
+                return True
+        return False
+
+    for edge in entity_info['edges']:
+        if edge['edge_type'] != 'Line':
+            print("edge_type", edge['edge_type'])
             continue
 
-        gt_line = [edge_origin, edge_direction]
+        gt_line = [edge['edge_origin'], edge['edge_direction']]
 
         for i, stroke in enumerate(stroke_objects):
             if stroke.type == 'straight_stroke':
-
                 stroke_line = [stroke.point0, stroke.point1]
-
                 if same_line(gt_line, stroke_line):
                     labels[i, 0] = 1
-                
+
     return labels
-            
-
-def distance(point1, point2):
-    dist = math.sqrt(sum((a - b) ** 2 for a, b in zip(point1, point2)))
-    return dist
-
-
-def same_line(gt_line, target_line, threshold = 0.001):
-
-    #check if we have a correct point
-    correct_point = False
-    if distance(gt_line[0], target_line[0]) < threshold or distance(gt_line[0], target_line[1]) < threshold:
-        correct_point = True
-    
-    #check if we have a correct direction
-    correct_dir = False
-    dir_target_line = np.array([x - y for x,y in zip(target_line[0], target_line[1])])
-    normalized_dir_target_line = np.round(dir_target_line / np.linalg.norm(dir_target_line), 3)
-    invert_normalized_dir_target_line = [-x for x in normalized_dir_target_line]
-
-    if np.allclose(gt_line[1], normalized_dir_target_line) or np.allclose(gt_line[1], invert_normalized_dir_target_line):
-        correct_dir = True
-
-    return correct_point and correct_dir
 
 
 def plot_3D(lines):
