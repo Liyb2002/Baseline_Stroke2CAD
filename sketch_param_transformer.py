@@ -37,16 +37,46 @@ def sketch_param_transformer(dataset, model, num_epochs=1, batch_size=1, learnin
             connectivity_matrix = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects)
 
             optimizer.zero_grad()
-            output_probabilities = model(stroke_objects, connectivity_matrix)
-            print("output_probabilities", output_probabilities.shape)
 
             parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
-            
             entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
-
             gt_labels = preprocessing.stroke_graph.build_gt_label(entity_info[0], stroke_objects)
+            gt_labels.type(torch.float32)
 
-            break
+            output_probabilities = model(stroke_objects, connectivity_matrix)
+
+            loss = criterion(output_probabilities, gt_labels)
+
+            loss.backward()
+            optimizer.step()
+
+            total_train_loss += loss.item()
+        
+        avg_train_loss = total_train_loss / len(train_loader)
+        print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {avg_train_loss:.4f}')
+
+        model.eval()
+        total_val_loss = 0
+        with torch.no_grad():
+            for batch in validation_loader:
+                CAD_Program_path, final_edges, strokes_dict_path = batch
+
+                stroke_objects = operation_transformer.separate_strokes_keep_order(final_edges)
+                connectivity_matrix = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects)
+
+                parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
+                entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
+                gt_labels = preprocessing.stroke_graph.build_gt_label(entity_info[0], stroke_objects)
+
+                output_probabilities = model(stroke_objects, connectivity_matrix)
+
+                loss = criterion(output_probabilities, gt_labels)
+                total_val_loss += loss.item()
+
+        avg_val_loss = total_val_loss / len(validation_loader)
+        print(f'Epoch [{epoch+1}/{num_epochs}], Val Loss: {avg_val_loss:.4f}')
+
+
 
 
 

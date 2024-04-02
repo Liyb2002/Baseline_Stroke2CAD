@@ -31,8 +31,6 @@ def build_connectivity_matrix(strokes_dict_path, stroke_objects):
                         connectivity_matrix[stroke_index, intersected_index] = 1
                         connectivity_matrix[intersected_index, stroke_index] = 1
 
-    print("len(stroke_objects)", len(stroke_objects), connectivity_matrix.shape)
-
     connectivity_matrix = adjacency_matrix_to_edge_index(connectivity_matrix)
 
     return connectivity_matrix
@@ -48,9 +46,7 @@ def adjacency_matrix_to_edge_index(connectivity_matrix):
 
 
 def build_gt_label(entity_info, stroke_objects):
-    labels = np.zeros((len(stroke_objects), 1))
-
-    gts = []
+    labels = torch.zeros((len(stroke_objects), 1), dtype=torch.float32)
 
     for edge in entity_info['edges']:
         edge_id = edge['edge_id']
@@ -58,25 +54,27 @@ def build_gt_label(entity_info, stroke_objects):
         edge_direction = edge['edge_direction']
         edge_origin = edge['edge_origin']
 
+        if edge_type != 'Line':
+            print("edge_type", edge_type)
+            continue
+
         gt_line = [edge_origin, edge_direction]
 
-        for stroke in stroke_objects:
+        for i, stroke in enumerate(stroke_objects):
             if stroke.type == 'straight_stroke':
 
                 stroke_line = [stroke.point0, stroke.point1]
 
                 if same_line(gt_line, stroke_line):
-                    print("gt_line", gt_line)
-                    print("stroke_line", stroke_line)
-                    print("--------")
-
-
-    # plot_3D(gts)
+                    labels[i, 0] = 1
+                
+    return labels
             
 
 def distance(point1, point2):
     dist = math.sqrt(sum((a - b) ** 2 for a, b in zip(point1, point2)))
     return dist
+
 
 def same_line(gt_line, target_line, threshold = 0.001):
 
@@ -95,6 +93,7 @@ def same_line(gt_line, target_line, threshold = 0.001):
         correct_dir = True
 
     return correct_point and correct_dir
+
 
 def plot_3D(lines):
     fig = plt.figure()
