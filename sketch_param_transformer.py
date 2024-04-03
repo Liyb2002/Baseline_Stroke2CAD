@@ -55,7 +55,7 @@ def train_sketch_param_transformer(dataset, device, num_epochs=10, batch_size=1,
             gt_labels = gt_labels.to(device)  
 
             output_probabilities = model(stroke_objects, connectivity_matrix)
-
+            # print("output_probabilities", output_probabilities)
             loss = criterion(output_probabilities, gt_labels)
 
             loss.backward()
@@ -123,7 +123,7 @@ def run_sketch_param_prediction():
 
     flat_matrix = output_probabilities.flatten()
 
-    top_values, indices = torch.topk(flat_matrix, 4)
+    top_values, indices = torch.topk(flat_matrix, 5)
 
     print("top_values", top_values)
     print("indices", indices)

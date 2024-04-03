@@ -61,7 +61,10 @@ def build_gt_label(entity_info, stroke_objects):
                 if same_line(gt_line, stroke_line):
                     labels[i, 0] = 1
 
-    sanity_check = labels.flatten()
+    target_id = torch.nonzero(labels == 1)
+    print("labels[0]", labels[0])
+    print("labels[1]", labels[1])
+    print("target_id", target_id)
 
     return labels
 
