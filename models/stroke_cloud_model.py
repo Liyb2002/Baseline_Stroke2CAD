@@ -98,18 +98,19 @@ class LineEmbeddingNetwork(nn.Module):
                 curved_strokes.append(stroke)
 
         straight_features = [torch.cat([line.point0, line.point1]) for line in straight_strokes]
-        curved_features = [line.points.flatten() for line in curved_strokes]
-
         straight_features_padded = pad_sequence(straight_features, batch_first=True)
-        curved_features_padded = pad_sequence(curved_features, batch_first=True)
-
         straight_padded_length = straight_features_padded.size(0)
-        curved_padded_length = curved_features_padded.size(0)
         reset_positions_straight = self.create_reset_positions(straight_strokes, straight_padded_length)
-        reset_positions_curved = self.create_reset_positions(curved_strokes, curved_padded_length)
-
         straight_embedded = self.straight_line_embedding(straight_features_padded, reset_positions_straight)
-        curved_embedded = self.curved_line_embedding(curved_features_padded, reset_positions_curved )
+
+        if len(curved_strokes) == 0:
+            curved_embedded = torch.tensor([])
+        else:
+            curved_features = [line.points.flatten() for line in curved_strokes]
+            curved_features_padded = pad_sequence(curved_features, batch_first=True)
+            curved_padded_length = curved_features_padded.size(0)
+            reset_positions_curved = self.create_reset_positions(curved_strokes, curved_padded_length)
+            curved_embedded = self.curved_line_embedding(curved_features_padded, reset_positions_curved )
 
         combined = torch.cat((straight_embedded, curved_embedded), dim=0)
         return combined

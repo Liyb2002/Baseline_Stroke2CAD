@@ -81,8 +81,8 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=1, learning_r
 def separate_strokes_keep_order(final_edges):
     final_strokes = []
 
-    for combined in final_edges:
-
+    for combined in final_edges:        
+        
         for key in combined:
             data_block = combined[key]
             

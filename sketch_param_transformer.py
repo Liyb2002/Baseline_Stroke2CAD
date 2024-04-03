@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader, random_split
 import torch.optim as optim
 import torch.nn as nn
 from tqdm import tqdm 
+import os
 
 import preprocessing.preprocess
 import models.sketch_param_model
@@ -11,7 +12,17 @@ import onshape.parse_CAD
 import operation_transformer
 import preprocessing.stroke_graph
 
-def sketch_param_transformer(dataset, model, device, num_epochs=1, batch_size=1, learning_rate=1e-3):
+def train_sketch_param_transformer(dataset, device, num_epochs=1, batch_size=1, learning_rate=1e-3):
+
+    model = models.sketch_param_model.SketchPredictor()
+    model.to(device)
+
+    checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "SketchPredictor_model", "SketchPredictor_model" + ".ckpt")
+    loaded_model = preprocessing.io_utils.load_model(model, checkpoint_path)
+    if loaded_model is not None:
+        return loaded_model
+
+
     total_size = len(dataset)
     train_size = int(0.8 * total_size) 
     validation_size = total_size - train_size  
@@ -58,7 +69,7 @@ def sketch_param_transformer(dataset, model, device, num_epochs=1, batch_size=1,
         model.eval()
         total_val_loss = 0
         with torch.no_grad():
-            for batch in validation_loader:
+            for batch in tqdm(validation_loader):
                 CAD_Program_path, final_edges, strokes_dict_path = batch
 
                 stroke_objects = operation_transformer.separate_strokes_keep_order(final_edges)
@@ -80,14 +91,37 @@ def sketch_param_transformer(dataset, model, device, num_epochs=1, batch_size=1,
         avg_val_loss = total_val_loss / len(validation_loader)
         print(f'Epoch [{epoch+1}/{num_epochs}], Val Loss: {avg_val_loss:.4f}')
 
+    preprocessing.io_utils.save_model(model, "SketchPredictor_model")
+    return model
 
 
 
-device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-device = "cpu"
-stroke_cloud_dataset = preprocessing.preprocess.get_stroke_cloud()
-model = models.sketch_param_model.SketchPredictor()
-model.to(device)
+
+def run_sketch_param_prediction():
+    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    device = "cpu"
+    stroke_cloud_dataset = preprocessing.preprocess.get_stroke_cloud()
+
+    SketchPredictor_model = train_sketch_param_transformer(stroke_cloud_dataset, device)
+
+    data_loader = DataLoader(stroke_cloud_dataset, batch_size=1, shuffle=True, collate_fn=preprocessing.io_utils.stroke_cloud_collate)
+    sampled_batch = next(iter(data_loader))
+    CAD_Program_path, final_edges, strokes_dict_path = sampled_batch
+
+    stroke_objects = operation_transformer.separate_strokes_keep_order(final_edges)
+    for stroke_obj in stroke_objects:
+        stroke_obj.to_device(device)
+    connectivity_matrix = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects).to(device)
+
+    parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
+    entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
+
+    SketchPredictor_model.eval()
+
+    with torch.no_grad():
+        output_probabilities = SketchPredictor_model(stroke_objects, connectivity_matrix)
+
+    print(output_probabilities)
 
 
-sketch_param_transformer(stroke_cloud_dataset, model, device)
+run_sketch_param_prediction()
