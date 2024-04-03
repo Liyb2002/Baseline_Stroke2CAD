@@ -12,15 +12,15 @@ import onshape.parse_CAD
 import operation_transformer
 import preprocessing.stroke_graph
 
-def train_sketch_param_transformer(dataset, device, num_epochs=1, batch_size=1, learning_rate=1e-3):
+def train_sketch_param_transformer(dataset, device, num_epochs=10, batch_size=1, learning_rate=1e-3):
 
     model = models.sketch_param_model.SketchPredictor()
     model.to(device)
 
-    checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "SketchPredictor_model", "SketchPredictor_model" + ".ckpt")
-    loaded_model = preprocessing.io_utils.load_model(model, checkpoint_path)
-    if loaded_model is not None:
-        return loaded_model
+    # checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "SketchPredictor_model", "SketchPredictor_model" + ".ckpt")
+    # loaded_model = preprocessing.io_utils.load_model(model, checkpoint_path)
+    # if loaded_model is not None:
+    #     return loaded_model
 
 
     total_size = len(dataset)
@@ -33,7 +33,7 @@ def train_sketch_param_transformer(dataset, device, num_epochs=1, batch_size=1, 
     validation_loader = DataLoader(validation_dataset, batch_size=batch_size, shuffle=False, collate_fn=preprocessing.io_utils.stroke_cloud_collate)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    criterion = nn.BCEWithLogitsLoss()
+    criterion = nn.BCELoss()
     
     for epoch in range(num_epochs):
         model.train()
@@ -121,7 +121,15 @@ def run_sketch_param_prediction():
     with torch.no_grad():
         output_probabilities = SketchPredictor_model(stroke_objects, connectivity_matrix)
 
-    print(output_probabilities)
+    flat_matrix = output_probabilities.flatten()
+
+    top_values, indices = torch.topk(flat_matrix, 4)
+
+    print("top_values", top_values)
+    print("indices", indices)
+
+    return top_values, indices
+
 
 
 run_sketch_param_prediction()

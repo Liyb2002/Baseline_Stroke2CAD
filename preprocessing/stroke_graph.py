@@ -48,25 +48,6 @@ def adjacency_matrix_to_edge_index(connectivity_matrix):
 def build_gt_label(entity_info, stroke_objects):
     labels = torch.zeros((len(stroke_objects), 1), dtype=torch.float32)
 
-    def distance(point1, point2):
-        # Assuming point1 and point2 are numpy arrays or lists
-        point1, point2 = np.array(point1), np.array(point2)
-        return np.sqrt(np.sum((point1 - point2) ** 2))
-
-    def same_line(gt_line, target_line, threshold=0.001):
-        # Convert points to numpy arrays if they are tensors
-        gt_line = [point.cpu().numpy() if isinstance(point, torch.Tensor) else np.array(point) for point in gt_line]
-        target_line = [point.cpu().numpy() if isinstance(point, torch.Tensor) else np.array(point) for point in target_line]
-
-        # Check if there is a correct point
-        if distance(gt_line[0], target_line[0]) < threshold or distance(gt_line[0], target_line[1]) < threshold:
-            # Check if there is a correct direction
-            dir_gt_line = np.round((gt_line[1] - gt_line[0]) / np.linalg.norm(gt_line[1] - gt_line[0]), 3)
-            dir_target_line = np.round((target_line[1] - target_line[0]) / np.linalg.norm(target_line[1] - target_line[0]), 3)
-            if np.allclose(dir_gt_line, dir_target_line) or np.allclose(dir_gt_line, -dir_target_line):
-                return True
-        return False
-
     for edge in entity_info['edges']:
         if edge['edge_type'] != 'Line':
             print("edge_type", edge['edge_type'])
@@ -80,7 +61,30 @@ def build_gt_label(entity_info, stroke_objects):
                 if same_line(gt_line, stroke_line):
                     labels[i, 0] = 1
 
+    sanity_check = labels.flatten()
+
     return labels
+
+
+def distance(point1, point2):
+    point1, point2 = np.array(point1), np.array(point2)
+    return np.sqrt(np.sum((point1 - point2) ** 2))
+
+
+def same_line(gt_line, target_line, threshold=0.001):
+    gt_line = [point.cpu().numpy() if isinstance(point, torch.Tensor) else np.array(point) for point in gt_line]
+    target_line = [point.cpu().numpy() if isinstance(point, torch.Tensor) else np.array(point) for point in target_line]
+
+    # Check if there is a correct point
+    if distance(gt_line[0], target_line[0]) < threshold or distance(gt_line[0], target_line[1]) < threshold:
+
+        # Check if there is a correct direction
+
+        dir_gt_line = np.round((gt_line[1]) / np.linalg.norm(gt_line[1]), 3)
+        dir_target_line = np.round((target_line[1] - target_line[0]) / np.linalg.norm(target_line[1] - target_line[0]), 3)
+        if np.allclose(dir_gt_line, dir_target_line) or np.allclose(dir_gt_line, -dir_target_line):
+            return True
+    return False
 
 
 def plot_3D(lines):
