@@ -119,6 +119,7 @@ class LineEmbeddingNetwork(nn.Module):
             curved_embedded = self.curved_line_embedding(curved_features)
 
         combined = torch.cat((straight_embedded, curved_embedded), dim=0)
+        
         return combined
     
 

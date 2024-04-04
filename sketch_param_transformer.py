@@ -12,7 +12,7 @@ import onshape.parse_CAD
 import operation_transformer
 import preprocessing.stroke_graph
 
-def train_sketch_param_transformer(dataset, device, num_epochs=10, batch_size=1, learning_rate=1e-3):
+def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=5e-4):
 
     model = models.sketch_param_model.SketchPredictor()
     model.to(device)
@@ -35,7 +35,9 @@ def train_sketch_param_transformer(dataset, device, num_epochs=10, batch_size=1,
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     criterion = nn.BCELoss()
     
-    for epoch in range(num_epochs):
+    epoch = 0
+    for i in range (1):
+        epoch += 1
         model.train()
         total_train_loss = 0
 
@@ -53,18 +55,21 @@ def train_sketch_param_transformer(dataset, device, num_epochs=10, batch_size=1,
             entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
             gt_labels = preprocessing.stroke_graph.build_gt_label(entity_info[0], stroke_objects)
             gt_labels = gt_labels.to(device)  
+            gt_labels = gt_labels
+
 
             output_probabilities = model(stroke_objects, connectivity_matrix)
-            # print("output_probabilities", output_probabilities)
             loss = criterion(output_probabilities, gt_labels)
 
             loss.backward()
             optimizer.step()
 
             total_train_loss += loss.item()
-        
+
+            break
+                    
         avg_train_loss = total_train_loss / len(train_loader)
-        print(f'Epoch [{epoch+1}/{num_epochs}], Train Loss: {avg_train_loss:.4f}')
+        print(f'Epoch [{epoch}], Train Loss: {avg_train_loss:.4f}')
 
         model.eval()
         total_val_loss = 0
@@ -82,6 +87,7 @@ def train_sketch_param_transformer(dataset, device, num_epochs=10, batch_size=1,
                 entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
                 gt_labels = preprocessing.stroke_graph.build_gt_label(entity_info[0], stroke_objects)
                 gt_labels = gt_labels.to(device)  
+                gt_labels = gt_labels
 
                 output_probabilities = model(stroke_objects, connectivity_matrix)
 
@@ -89,7 +95,10 @@ def train_sketch_param_transformer(dataset, device, num_epochs=10, batch_size=1,
                 total_val_loss += loss.item()
 
         avg_val_loss = total_val_loss / len(validation_loader)
-        print(f'Epoch [{epoch+1}/{num_epochs}], Val Loss: {avg_val_loss:.4f}')
+
+        if avg_val_loss < 0.08:
+            break
+        print(f'Epoch [{epoch}], Val Loss: {avg_val_loss:.4f}')
 
     preprocessing.io_utils.save_model(model, "SketchPredictor_model")
     return model
@@ -123,7 +132,7 @@ def run_sketch_param_prediction():
 
     flat_matrix = output_probabilities.flatten()
 
-    top_values, indices = torch.topk(flat_matrix, 5)
+    top_values, indices = torch.topk(flat_matrix, 10)
 
     print("top_values", top_values)
     print("indices", indices)
@@ -131,5 +140,7 @@ def run_sketch_param_prediction():
     return top_values, indices
 
 
+def face_aggregate():
+    print("hi")
 
 run_sketch_param_prediction()

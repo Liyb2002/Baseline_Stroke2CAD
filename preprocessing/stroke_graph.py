@@ -11,12 +11,14 @@ def build_connectivity_matrix(strokes_dict_path, stroke_objects):
 
     with open(strokes_dict_path[0], 'r') as file:
         data = json.load(file)
-    stroke_ids = set()
     
     ordered_stroke_ids = [stroke_obj.line_id for stroke_obj in stroke_objects]
     stroke_id_set = set(ordered_stroke_ids)
 
     id_to_index = {stroke_id: index for index, stroke_id in enumerate(ordered_stroke_ids)}
+
+    # for line_id, index in id_to_index.items():
+    #     print(f"{line_id}: {index}")
 
 
     n = len(ordered_stroke_ids)
@@ -33,16 +35,51 @@ def build_connectivity_matrix(strokes_dict_path, stroke_objects):
 
     connectivity_matrix = adjacency_matrix_to_edge_index(connectivity_matrix)
 
-    return connectivity_matrix
+    plane_dict = build_plane_dict(stroke_id_set, id_to_index, data)
+
+    plot_plane_dict(plane_dict, stroke_objects)
+
+    return connectivity_matrix, plane_dict
 
 
 def adjacency_matrix_to_edge_index(connectivity_matrix):
+    #just a format transforming function, nothing important
     edge_index = []
     for i in range(connectivity_matrix.shape[0]):
         for j in range(connectivity_matrix.shape[1]):
-            if connectivity_matrix[i, j] != 0:  # Assuming non-zero value indicates an edge
+            if connectivity_matrix[i, j] != 0:
                 edge_index.append([i, j])
     return torch.tensor(edge_index).t().contiguous()
+
+
+def build_plane_dict(stroke_id_set, id_to_index, strokes_dict):
+    plane_dict = {}
+    for stroke in strokes_dict:
+        plane_ids = stroke['planes']
+        stroke_id = stroke['id']
+
+        if stroke_id in stroke_id_set: 
+            for plane_id in plane_ids:
+                if plane_id not in plane_dict:
+                    plane_dict[plane_id] = []
+                plane_dict[plane_id].append(stroke_id)
+
+    
+    for plane_id in plane_dict:
+        plane_dict[plane_id] = [id_to_index[stroke_id] for stroke_id in plane_dict[plane_id] if stroke_id in id_to_index]
+
+    return plane_dict
+        
+
+def plot_plane_dict(plane_dict, stroke_objects):
+    for plane_id in plane_dict:
+        lines = []
+        strokes_indices = plane_dict[plane_id]
+        for index in strokes_indices:
+            if stroke_objects[index].type == 'straight_stroke':
+                line = [stroke_objects[index].point0, stroke_objects[index].point1]
+                lines.append(line)
+        plot_3D(lines)
 
 
 def build_gt_label(entity_info, stroke_objects):
@@ -62,9 +99,7 @@ def build_gt_label(entity_info, stroke_objects):
                     labels[i, 0] = 1
 
     target_id = torch.nonzero(labels == 1)
-    print("labels[0]", labels[0])
-    print("labels[1]", labels[1])
-    print("target_id", target_id)
+    # print("target_id", target_id)
 
     return labels
 
