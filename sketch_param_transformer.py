@@ -141,7 +141,8 @@ def run_sketch_param_prediction():
 
     planes = utils.face_aggregate.find_planes(top_indices, stroke_objects, raw_connectivity_matrix)
 
-    print("planes", planes)
+    for plane in planes:
+        preprocessing.stroke_graph.plot_3D(plane)
     return top_values, top_indices
 
 
