@@ -139,10 +139,19 @@ def run_sketch_param_prediction():
     print("top_values", top_values)
     print("indices", top_indices)
 
-    planes = utils.face_aggregate.find_planes(top_indices, stroke_objects, raw_connectivity_matrix)
+    planes, plane_stroke_ids = utils.face_aggregate.find_planes(top_indices, stroke_objects, raw_connectivity_matrix)
 
-    for plane in planes:
+    for (plane, plane_stroke_id) in zip (planes, plane_stroke_ids):
         preprocessing.stroke_graph.plot_3D(plane)
+        print("plane_stroke_id", plane_stroke_id)
+
+        confidence = 0
+        for id in plane_stroke_id:
+            prob = flat_matrix[id]
+            confidence += prob / len(plane_stroke_id)
+        
+        print("confidence", confidence)
+        
     return top_values, top_indices
 
 

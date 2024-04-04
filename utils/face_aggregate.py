@@ -26,9 +26,10 @@ def tensor_to_tuple(tensor):
     return tuple(tensor.tolist())
 
 def find_planes(stroke_indices, stroke_objects, raw_connectivity_matrix):
-    print("len(stroke_indices)",len(stroke_indices))
 
     planes = []
+    plane_stroke_ids = []
+
     for i in range(len(stroke_indices)):
 
         if stroke_objects[i].type == 'curve_stroke':
@@ -60,6 +61,10 @@ def find_planes(stroke_indices, stroke_objects, raw_connectivity_matrix):
                                 stroke_objects[k].point0, stroke_objects[k].point1]
 
                                 unique_points = find_unique_points(points)
+                                if len(unique_points) == 0:
+                                    planes.append(points)
+                                    plane_stroke_ids.append([stroke_indices[i],stroke_indices[j],stroke_indices[k]])
+                                    break
 
                                 # find the 4th stroke
                                 for l in range(k+1, len(stroke_indices)):
@@ -74,7 +79,8 @@ def find_planes(stroke_indices, stroke_objects, raw_connectivity_matrix):
                                                 [stroke_objects[k].point0, stroke_objects[k].point1],
                                                 line4
                                             ))
+                                            plane_stroke_ids.append([stroke_indices[i],stroke_indices[j],stroke_indices[k],stroke_indices[l]])
                                             break
 
-    return planes
+    return planes, plane_stroke_ids
 
