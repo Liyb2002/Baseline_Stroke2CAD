@@ -11,16 +11,17 @@ import data_structure.stroke_class
 import onshape.parse_CAD
 import operation_transformer
 import preprocessing.stroke_graph
+import utils.face_aggregate
 
 def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=5e-4):
 
     model = models.sketch_param_model.SketchPredictor()
     model.to(device)
 
-    # checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "SketchPredictor_model", "SketchPredictor_model" + ".ckpt")
-    # loaded_model = preprocessing.io_utils.load_model(model, checkpoint_path)
-    # if loaded_model is not None:
-    #     return loaded_model
+    checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "SketchPredictor_model", "SketchPredictor_model" + ".ckpt")
+    loaded_model = preprocessing.io_utils.load_model(model, checkpoint_path)
+    if loaded_model is not None:
+        return loaded_model
 
 
     total_size = len(dataset)
@@ -47,7 +48,8 @@ def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=
             stroke_objects = operation_transformer.separate_strokes_keep_order(final_edges)
             for stroke_obj in stroke_objects:
                 stroke_obj.to_device(device)
-            connectivity_matrix = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects).to(device)
+            connectivity_matrix, _, _ = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects)
+            connectivity_matrix = connectivity_matrix.to(device)
 
             optimizer.zero_grad()
 
@@ -65,8 +67,6 @@ def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=
             optimizer.step()
 
             total_train_loss += loss.item()
-
-            break
                     
         avg_train_loss = total_train_loss / len(train_loader)
         print(f'Epoch [{epoch}], Train Loss: {avg_train_loss:.4f}')
@@ -81,7 +81,8 @@ def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=
                 for stroke_obj in stroke_objects:
                     stroke_obj.to_device(device)
 
-                connectivity_matrix = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects)
+                connectivity_matrix, _, _ = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects)
+                connectivity_matrix = connectivity_matrix.to(device)
 
                 parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
                 entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
@@ -120,7 +121,8 @@ def run_sketch_param_prediction():
     stroke_objects = operation_transformer.separate_strokes_keep_order(final_edges)
     for stroke_obj in stroke_objects:
         stroke_obj.to_device(device)
-    connectivity_matrix = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects).to(device)
+    connectivity_matrix, raw_connectivity_matrix, plane_dict = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects)
+    connectivity_matrix = connectivity_matrix.to(device)
 
     parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
     entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
@@ -132,15 +134,15 @@ def run_sketch_param_prediction():
 
     flat_matrix = output_probabilities.flatten()
 
-    top_values, indices = torch.topk(flat_matrix, 10)
+    top_values, top_indices = torch.topk(flat_matrix, 10)
 
     print("top_values", top_values)
-    print("indices", indices)
+    print("indices", top_indices)
 
-    return top_values, indices
+    planes = utils.face_aggregate.find_planes(top_indices, stroke_objects, raw_connectivity_matrix)
 
+    print("planes", planes)
+    return top_values, top_indices
 
-def face_aggregate():
-    print("hi")
 
 run_sketch_param_prediction()

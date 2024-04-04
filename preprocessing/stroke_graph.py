@@ -22,7 +22,7 @@ def build_connectivity_matrix(strokes_dict_path, stroke_objects):
 
 
     n = len(ordered_stroke_ids)
-    connectivity_matrix = np.zeros((n, n), dtype=int)
+    raw_connectivity_matrix = np.zeros((n, n), dtype=int)
     for stroke in data:
         if stroke['id'] in stroke_id_set:
             stroke_index = id_to_index[stroke['id']]
@@ -30,16 +30,16 @@ def build_connectivity_matrix(strokes_dict_path, stroke_objects):
                 for intersected_id in sublist:
                     if intersected_id in stroke_id_set:
                         intersected_index = id_to_index[intersected_id]
-                        connectivity_matrix[stroke_index, intersected_index] = 1
-                        connectivity_matrix[intersected_index, stroke_index] = 1
+                        raw_connectivity_matrix[stroke_index, intersected_index] = 1
+                        raw_connectivity_matrix[intersected_index, stroke_index] = 1
 
-    connectivity_matrix = adjacency_matrix_to_edge_index(connectivity_matrix)
+    connectivity_matrix = adjacency_matrix_to_edge_index(raw_connectivity_matrix)
 
     plane_dict = build_plane_dict(stroke_id_set, id_to_index, data)
 
-    plot_plane_dict(plane_dict, stroke_objects)
+    # plot_plane_dict(plane_dict, stroke_objects)
 
-    return connectivity_matrix, plane_dict
+    return connectivity_matrix, raw_connectivity_matrix, plane_dict
 
 
 def adjacency_matrix_to_edge_index(connectivity_matrix):
