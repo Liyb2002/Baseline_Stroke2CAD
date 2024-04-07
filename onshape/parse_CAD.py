@@ -92,3 +92,4 @@ def sketch_entity(entities):
         entities_list.append(singele_entity_info)
     
     return entities_list
+

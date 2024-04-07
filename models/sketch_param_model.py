@@ -9,7 +9,7 @@ class SketchPredictor(nn.Module):
     def __init__(self, embedding_size = 128, 
                  num_layers = 8 , num_gnn_layers=3, num_heads = 8 , 
                  hidden_size = 128, gnn_hidden_size = 128, 
-                 max_seq_length = 1000, dropout=0.0):
+                 max_seq_length = 1000, dropout=0.1):
         super(SketchPredictor, self).__init__()
         self.embedding_size = embedding_size
         self.num_layers = num_layers

@@ -104,6 +104,18 @@ def build_gt_label(entity_info, stroke_objects):
     return labels
 
 
+def build_gt_label_from_ID(ID, stroke_objects):
+    labels = torch.zeros((len(stroke_objects), 1), dtype=torch.float32)
+
+    for i, stroke in enumerate(stroke_objects):
+        if stroke.feature_id == ID:
+            labels[i, 0] = 1
+
+    # target_id = torch.nonzero(labels == 1)
+    # print("target_id", target_id)
+
+    return labels
+
 def distance(point1, point2):
     point1, point2 = np.array(point1), np.array(point2)
     return np.sqrt(np.sum((point1 - point2) ** 2))

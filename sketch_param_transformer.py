@@ -18,10 +18,10 @@ def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=
     model = models.sketch_param_model.SketchPredictor()
     model.to(device)
 
-    checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "SketchPredictor_model", "SketchPredictor_model" + ".ckpt")
-    loaded_model = preprocessing.io_utils.load_model(model, checkpoint_path)
-    if loaded_model is not None:
-        return loaded_model
+    # checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "SketchPredictor_model", "SketchPredictor_model" + ".ckpt")
+    # loaded_model = preprocessing.io_utils.load_model(model, checkpoint_path)
+    # if loaded_model is not None:
+    #     return loaded_model
 
 
     total_size = len(dataset)
@@ -53,12 +53,14 @@ def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=
 
             optimizer.zero_grad()
 
-            parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
-            entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
-            gt_labels = preprocessing.stroke_graph.build_gt_label(entity_info[0], stroke_objects)
+            # parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
+            # sequences = parsed_CAD_program[0]['sequence']
+            # entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
+            # gt_labels = preprocessing.stroke_graph.build_gt_label(entity_info[0], stroke_objects)
+
+            gt_labels = preprocessing.stroke_graph.build_gt_label_from_ID(0, stroke_objects)
             gt_labels = gt_labels.to(device)  
             gt_labels = gt_labels
-
 
             output_probabilities = model(stroke_objects, connectivity_matrix)
             loss = criterion(output_probabilities, gt_labels)
@@ -84,9 +86,11 @@ def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=
                 connectivity_matrix, _, _ = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects)
                 connectivity_matrix = connectivity_matrix.to(device)
 
-                parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
-                entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
-                gt_labels = preprocessing.stroke_graph.build_gt_label(entity_info[0], stroke_objects)
+                # parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
+                # entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
+                # gt_labels = preprocessing.stroke_graph.build_gt_label(entity_info[0], stroke_objects)
+
+                gt_labels = preprocessing.stroke_graph.build_gt_label_from_ID(0, stroke_objects)
                 gt_labels = gt_labels.to(device)  
                 gt_labels = gt_labels
 
@@ -96,10 +100,10 @@ def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=
                 total_val_loss += loss.item()
 
         avg_val_loss = total_val_loss / len(validation_loader)
-
-        if avg_val_loss < 0.08:
-            break
         print(f'Epoch [{epoch}], Val Loss: {avg_val_loss:.4f}')
+
+        if avg_val_loss < 0.05:
+            break
 
     preprocessing.io_utils.save_model(model, "SketchPredictor_model")
     return model
@@ -142,7 +146,7 @@ def run_sketch_param_prediction():
     planes, plane_stroke_ids = utils.face_aggregate.find_planes(top_indices, stroke_objects, raw_connectivity_matrix)
 
     for (plane, plane_stroke_id) in zip (planes, plane_stroke_ids):
-        preprocessing.stroke_graph.plot_3D(plane)
+        # preprocessing.stroke_graph.plot_3D(plane)
         print("plane_stroke_id", plane_stroke_id)
 
         confidence = 0
