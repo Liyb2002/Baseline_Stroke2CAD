@@ -7,39 +7,47 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 
-def build_connectivity_matrix(strokes_dict_path, stroke_objects):
-
-    with open(strokes_dict_path[0], 'r') as file:
-        data = json.load(file)
-    
-    ordered_stroke_ids = [stroke_obj.line_id for stroke_obj in stroke_objects]
-    stroke_id_set = set(ordered_stroke_ids)
-
-    id_to_index = {stroke_id: index for index, stroke_id in enumerate(ordered_stroke_ids)}
-
-    # for line_id, index in id_to_index.items():
-    #     print(f"{line_id}: {index}")
+def build_connectivity_matrix(batch_strokes_dict_path, batch_stroke_objects):
+    connectivity_matrices = []
+    raw_connectivity_matrices = []
+    plane_dicts = []
 
 
-    n = len(ordered_stroke_ids)
-    raw_connectivity_matrix = np.zeros((n, n), dtype=int)
-    for stroke in data:
-        if stroke['id'] in stroke_id_set:
-            stroke_index = id_to_index[stroke['id']]
-            for sublist in stroke['intersections']:
-                for intersected_id in sublist:
-                    if intersected_id in stroke_id_set:
-                        intersected_index = id_to_index[intersected_id]
-                        raw_connectivity_matrix[stroke_index, intersected_index] = 1
-                        raw_connectivity_matrix[intersected_index, stroke_index] = 1
+    for strokes_dict_path, stroke_objects in zip(batch_strokes_dict_path, batch_stroke_objects):
+        with open(strokes_dict_path, 'r') as file:
+            data = json.load(file)
+        
+        ordered_stroke_ids = [stroke_obj.line_id for stroke_obj in stroke_objects]
+        stroke_id_set = set(ordered_stroke_ids)
 
-    connectivity_matrix = adjacency_matrix_to_edge_index(raw_connectivity_matrix)
+        id_to_index = {stroke_id: index for index, stroke_id in enumerate(ordered_stroke_ids)}
 
-    plane_dict = build_plane_dict(stroke_id_set, id_to_index, data)
+        # for line_id, index in id_to_index.items():
+        #     print(f"{line_id}: {index}")
 
-    # plot_plane_dict(plane_dict, stroke_objects)
 
-    return connectivity_matrix, raw_connectivity_matrix, plane_dict
+        n = len(ordered_stroke_ids)
+        raw_connectivity_matrix = np.zeros((n, n), dtype=int)
+        for stroke in data:
+            if stroke['id'] in stroke_id_set:
+                stroke_index = id_to_index[stroke['id']]
+                for sublist in stroke['intersections']:
+                    for intersected_id in sublist:
+                        if intersected_id in stroke_id_set:
+                            intersected_index = id_to_index[intersected_id]
+                            raw_connectivity_matrix[stroke_index, intersected_index] = 1
+                            raw_connectivity_matrix[intersected_index, stroke_index] = 1
+
+        connectivity_matrix = adjacency_matrix_to_edge_index(raw_connectivity_matrix)
+
+        plane_dict = build_plane_dict(stroke_id_set, id_to_index, data)
+
+        # plot_plane_dict(plane_dict, stroke_objects)
+        connectivity_matrices.append(connectivity_matrix)
+        raw_connectivity_matrices.append(raw_connectivity_matrix)
+        plane_dicts.append(plane_dict)
+
+    return connectivity_matrices, raw_connectivity_matrices, plane_dicts
 
 
 def adjacency_matrix_to_edge_index(connectivity_matrix):
@@ -104,17 +112,19 @@ def build_gt_label(entity_info, stroke_objects):
     return labels
 
 
-def build_gt_label_from_ID(ID, stroke_objects):
-    labels = torch.zeros((len(stroke_objects), 1), dtype=torch.float32)
+def build_gt_label_from_ID(ID, batch_stroke_objects):
 
-    for i, stroke in enumerate(stroke_objects):
-        if stroke.feature_id == ID:
-            labels[i, 0] = 1
+    batch_labels = []
+    for stroke_objects in batch_stroke_objects:
+        labels = torch.zeros((len(stroke_objects), 1), dtype=torch.float32)
 
-    # target_id = torch.nonzero(labels == 1)
-    # print("target_id", target_id)
+        for i, stroke in enumerate(stroke_objects):
+            if stroke.feature_id == ID:
+                labels[i, 0] = 1
+        
+        batch_labels.append(labels)
 
-    return labels
+    return batch_labels
 
 def distance(point1, point2):
     point1, point2 = np.array(point1), np.array(point2)

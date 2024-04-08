@@ -13,7 +13,9 @@ import operation_transformer
 import preprocessing.stroke_graph
 import utils.face_aggregate
 
-def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=5e-4):
+import models.LineEmbedding
+
+def train_sketch_param_transformer(dataset, device, batch_size=8, learning_rate=5e-4):
 
     model = models.sketch_param_model.SketchPredictor()
     model.to(device)
@@ -35,7 +37,8 @@ def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     criterion = nn.BCELoss()
-    
+    Line_Embedding_model = models.LineEmbedding.LineEmbeddingNetwork_nonPos()
+
     epoch = 0
     for i in range (1):
         epoch += 1
@@ -43,13 +46,11 @@ def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=
         total_train_loss = 0
 
         for batch in tqdm(train_loader):
-            CAD_Program_path, final_edges, strokes_dict_path = batch
+            _, batch_final_edges, batch_strokes_dict_path = batch
 
-            stroke_objects = operation_transformer.separate_strokes_keep_order(final_edges)
-            for stroke_obj in stroke_objects:
-                stroke_obj.to_device(device)
-            connectivity_matrix, _, _ = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects)
-            connectivity_matrix = connectivity_matrix.to(device)
+            batch_stroke_objects = operation_transformer.separate_strokes_keep_order(batch_final_edges)
+
+            batch_connectivity_matrix, _, _ = preprocessing.stroke_graph.build_connectivity_matrix(batch_strokes_dict_path, batch_stroke_objects)
 
             optimizer.zero_grad()
 
@@ -58,12 +59,17 @@ def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=
             # entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
             # gt_labels = preprocessing.stroke_graph.build_gt_label(entity_info[0], stroke_objects)
 
-            gt_labels = preprocessing.stroke_graph.build_gt_label_from_ID(0, stroke_objects)
-            gt_labels = gt_labels.to(device)  
-            gt_labels = gt_labels
+            batch_labels = preprocessing.stroke_graph.build_gt_label_from_ID(0, batch_stroke_objects)
 
-            output_probabilities = model(stroke_objects, connectivity_matrix)
-            loss = criterion(output_probabilities, gt_labels)
+            batch_embedding = []
+            for stroke_objects in batch_stroke_objects:
+                embedding = Line_Embedding_model(stroke_objects)
+                batch_embedding.append(embedding)
+
+            batch_stroke_probabilities = model(batch_embedding, batch_connectivity_matrix)
+
+            loss = compute_loss(batch_stroke_probabilities, batch_labels)
+
 
             loss.backward()
             optimizer.step()
@@ -77,26 +83,24 @@ def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=
         total_val_loss = 0
         with torch.no_grad():
             for batch in tqdm(validation_loader):
-                CAD_Program_path, final_edges, strokes_dict_path = batch
+                _, batch_final_edges, batch_strokes_dict_path = batch
 
-                stroke_objects = operation_transformer.separate_strokes_keep_order(final_edges)
-                for stroke_obj in stroke_objects:
-                    stroke_obj.to_device(device)
+                batch_stroke_objects = operation_transformer.separate_strokes_keep_order(batch_final_edges)
 
-                connectivity_matrix, _, _ = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects)
-                connectivity_matrix = connectivity_matrix.to(device)
+                batch_connectivity_matrix, _, _ = preprocessing.stroke_graph.build_connectivity_matrix(batch_strokes_dict_path, batch_stroke_objects)
 
                 # parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
                 # entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
                 # gt_labels = preprocessing.stroke_graph.build_gt_label(entity_info[0], stroke_objects)
 
-                gt_labels = preprocessing.stroke_graph.build_gt_label_from_ID(0, stroke_objects)
-                gt_labels = gt_labels.to(device)  
-                gt_labels = gt_labels
+                batch_labels = preprocessing.stroke_graph.build_gt_label_from_ID(0, batch_stroke_objects)
 
-                output_probabilities = model(stroke_objects, connectivity_matrix)
+                for stroke_objects in batch_stroke_objects:
+                    embedding = Line_Embedding_model(stroke_objects)
 
-                loss = criterion(output_probabilities, gt_labels)
+                output_probabilities = model(batch_stroke_objects, batch_connectivity_matrix)
+                loss = criterion(output_probabilities, batch_labels)
+
                 total_val_loss += loss.item()
 
         avg_val_loss = total_val_loss / len(validation_loader)
@@ -107,6 +111,30 @@ def train_sketch_param_transformer(dataset, device, batch_size=1, learning_rate=
 
     preprocessing.io_utils.save_model(model, "SketchPredictor_model")
     return model
+
+
+def compute_loss(batch_stroke_probabilities, batch_labels):
+    criterion = nn.BCELoss(reduction='none')
+
+    max_length = max([prob.shape[0] for prob in batch_stroke_probabilities])
+    batch_size = len(batch_stroke_probabilities)
+
+    padded_probs = torch.zeros(batch_size, max_length, 1)
+    padded_labels = torch.zeros(batch_size, max_length, 1)
+
+    for i in range(batch_size):
+        length = batch_stroke_probabilities[i].shape[0]
+        padded_probs[i, :length, :] = batch_stroke_probabilities[i]
+        padded_labels[i, :length, :] = batch_labels[i]
+
+    mask = (padded_labels != 0).float()
+
+    loss = criterion(padded_probs, padded_labels)
+    loss *= mask
+
+    average_loss = loss.sum() / mask.sum()
+
+    return average_loss
 
 
 
@@ -157,6 +185,7 @@ def run_sketch_param_prediction():
         print("confidence", confidence)
         
     return top_values, top_indices
+
 
 
 run_sketch_param_prediction()

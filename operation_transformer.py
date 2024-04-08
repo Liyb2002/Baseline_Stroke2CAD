@@ -79,10 +79,11 @@ def operation_transformer(dataset, model, num_epochs=3, batch_size=1, learning_r
 
 
 def separate_strokes_keep_order(final_edges):
-    final_strokes = []
 
-    for combined in final_edges:        
-        
+    batch_strokes = []
+
+    for combined in final_edges:    
+        final_strokes = []
         for key in combined:
             data_block = combined[key]
             
@@ -94,8 +95,9 @@ def separate_strokes_keep_order(final_edges):
                 final_strokes.append(data_structure.stroke_class.StraightLine3D(data_block))
             else:
                 final_strokes.append(data_structure.stroke_class.CurveLine3D(data_block))
-    
-    return final_strokes
+
+        batch_strokes.append(final_strokes)
+    return batch_strokes
 
 
 def separate_strokes(final_edges):

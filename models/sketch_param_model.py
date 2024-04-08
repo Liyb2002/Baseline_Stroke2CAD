@@ -33,16 +33,22 @@ class SketchPredictor(nn.Module):
 
         self.fc_out = nn.Linear(hidden_size + embedding_size, 1)
 
-    def forward(self, strokes, adjacency_matrix):
-        stroke_embedding = self.embedding(strokes)
+    def forward(self, batch_embedding, batch_connectivity_matrix):
 
-        transformer_output = self.transformer_layers(stroke_embedding)
+        batch_stroke_probabilities = []
 
-        gnn_output = self.gnn_first_layer(stroke_embedding, adjacency_matrix)
-        for layer in self.gnn_layers:
-            gnn_output = layer(gnn_output, adjacency_matrix)
+        for stroke_embedding, adjacency_matrix in zip (batch_embedding, batch_connectivity_matrix):
 
-        combined_output = torch.cat([transformer_output, gnn_output], dim=-1)
-        
-        stroke_probabilities = torch.sigmoid(self.fc_out(combined_output))
-        return stroke_probabilities
+            transformer_output = self.transformer_layers(stroke_embedding)
+
+            gnn_output = self.gnn_first_layer(stroke_embedding, adjacency_matrix)
+            for layer in self.gnn_layers:
+                gnn_output = layer(gnn_output, adjacency_matrix)
+
+            combined_output = torch.cat([transformer_output, gnn_output], dim=-1)
+            
+            stroke_probabilities = torch.sigmoid(self.fc_out(combined_output))
+            
+            batch_stroke_probabilities.append(stroke_probabilities)
+
+        return batch_stroke_probabilities
