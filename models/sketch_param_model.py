@@ -33,7 +33,13 @@ class SketchPredictor(nn.Module):
 
         self.fc_out = nn.Linear(hidden_size + embedding_size, 1)
 
-    def forward(self, batch_embedding, batch_connectivity_matrix):
+    def forward(self, batch_stroke_objects, batch_connectivity_matrix):
+
+        batch_embedding = []
+        for stroke_objects in batch_stroke_objects:
+            embedding = self.embedding(stroke_objects)
+            batch_embedding.append(embedding)
+
 
         batch_stroke_probabilities = []
 

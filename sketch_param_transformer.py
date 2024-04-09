@@ -37,7 +37,6 @@ def train_sketch_param_transformer(dataset, device, batch_size=8, learning_rate=
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     criterion = nn.BCELoss()
-    Line_Embedding_model = models.LineEmbedding.LineEmbeddingNetwork_nonPos()
 
     epoch = 0
     for i in range (1):
@@ -54,19 +53,9 @@ def train_sketch_param_transformer(dataset, device, batch_size=8, learning_rate=
 
             optimizer.zero_grad()
 
-            # parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
-            # sequences = parsed_CAD_program[0]['sequence']
-            # entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
-            # gt_labels = preprocessing.stroke_graph.build_gt_label(entity_info[0], stroke_objects)
-
             batch_labels = preprocessing.stroke_graph.build_gt_label_from_ID(0, batch_stroke_objects)
 
-            batch_embedding = []
-            for stroke_objects in batch_stroke_objects:
-                embedding = Line_Embedding_model(stroke_objects)
-                batch_embedding.append(embedding)
-
-            batch_stroke_probabilities = model(batch_embedding, batch_connectivity_matrix)
+            batch_stroke_probabilities = model(batch_stroke_objects, batch_connectivity_matrix)
 
             loss = compute_loss(batch_stroke_probabilities, batch_labels)
 
@@ -89,17 +78,11 @@ def train_sketch_param_transformer(dataset, device, batch_size=8, learning_rate=
 
                 batch_connectivity_matrix, _, _ = preprocessing.stroke_graph.build_connectivity_matrix(batch_strokes_dict_path, batch_stroke_objects)
 
-                # parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
-                # entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
-                # gt_labels = preprocessing.stroke_graph.build_gt_label(entity_info[0], stroke_objects)
-
                 batch_labels = preprocessing.stroke_graph.build_gt_label_from_ID(0, batch_stroke_objects)
 
-                for stroke_objects in batch_stroke_objects:
-                    embedding = Line_Embedding_model(stroke_objects)
+                batch_stroke_probabilities = model(batch_stroke_objects, batch_connectivity_matrix)
 
-                output_probabilities = model(batch_stroke_objects, batch_connectivity_matrix)
-                loss = criterion(output_probabilities, batch_labels)
+                loss = compute_loss(batch_stroke_probabilities, batch_labels)
 
                 total_val_loss += loss.item()
 
@@ -148,13 +131,13 @@ def run_sketch_param_prediction():
 
     data_loader = DataLoader(stroke_cloud_dataset, batch_size=1, shuffle=True, collate_fn=preprocessing.io_utils.stroke_cloud_collate)
     sampled_batch = next(iter(data_loader))
-    CAD_Program_path, final_edges, strokes_dict_path = sampled_batch
 
-    stroke_objects = operation_transformer.separate_strokes_keep_order(final_edges)
-    for stroke_obj in stroke_objects:
-        stroke_obj.to_device(device)
-    connectivity_matrix, raw_connectivity_matrix, plane_dict = preprocessing.stroke_graph.build_connectivity_matrix(strokes_dict_path, stroke_objects)
-    connectivity_matrix = connectivity_matrix.to(device)
+
+    CAD_Program_path, batch_final_edges, batch_strokes_dict_path = sampled_batch
+
+    batch_stroke_objects = operation_transformer.separate_strokes_keep_order(batch_final_edges)
+
+    batch_connectivity_matrix, batch_raw_connectivity_matrix, _ = preprocessing.stroke_graph.build_connectivity_matrix(batch_strokes_dict_path, batch_stroke_objects)
 
     parsed_CAD_program = onshape.parse_CAD.parseCAD(CAD_Program_path)
     entity_info = onshape.parse_CAD.sketch_entity(parsed_CAD_program[0]['entities'])
@@ -162,16 +145,18 @@ def run_sketch_param_prediction():
     SketchPredictor_model.eval()
 
     with torch.no_grad():
-        output_probabilities = SketchPredictor_model(stroke_objects, connectivity_matrix)
+        batch_stroke_probabilities = SketchPredictor_model(batch_stroke_objects, batch_connectivity_matrix)
 
-    flat_matrix = output_probabilities.flatten()
+
+
+    flat_matrix = batch_stroke_probabilities[0].flatten()
 
     top_values, top_indices = torch.topk(flat_matrix, 10)
 
     print("top_values", top_values)
     print("indices", top_indices)
 
-    planes, plane_stroke_ids = utils.face_aggregate.find_planes(top_indices, stroke_objects, raw_connectivity_matrix)
+    planes, plane_stroke_ids = utils.face_aggregate.find_planes(top_indices, batch_stroke_objects[0], batch_raw_connectivity_matrix[0])
 
     for (plane, plane_stroke_id) in zip (planes, plane_stroke_ids):
         # preprocessing.stroke_graph.plot_3D(plane)
