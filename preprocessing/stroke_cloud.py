@@ -24,7 +24,7 @@ class Stroke_Cloud_Dataset(Dataset):
         CAD_stroke_pairs = []
 
         sub_folders = [d for d in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, d))]
-        sub_folders = sub_folders[:10]
+        sub_folders = sub_folders[:1]
         for sub_folder in tqdm(sub_folders):
             sub_folder_path = os.path.join(data_path, sub_folder)
             CAD_path = os.path.join(sub_folder_path, 'parsed_features.json')
@@ -36,7 +36,9 @@ class Stroke_Cloud_Dataset(Dataset):
                 final_edges_path = os.path.join(sub_folder_path, stroke_folder, 'final_edges.json')
                 strokes_dict_path = os.path.join(sub_folder_path, stroke_folder, 'strokes_dict.json')
                 if os.path.exists(final_edges_path) and os.path.exists(strokes_dict_path):
-                    final_edges = read_json_file(final_edges_path)
-                    CAD_stroke_pairs.append({'CAD_Program': CAD_path, 'final_edges': final_edges, 'strokes_dict': strokes_dict_path})
-
+                    # final_edges = read_json_file(final_edges_path)
+                    CAD_stroke_pairs.append({'CAD_Program': CAD_path, 'final_edges': final_edges_path, 'strokes_dict': strokes_dict_path})
+                    print("final_edges_path", final_edges_path)
+                    print("CAD_path", CAD_path)
+                
         return CAD_stroke_pairs
