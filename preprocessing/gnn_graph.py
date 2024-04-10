@@ -13,6 +13,25 @@ from matplotlib import pyplot as plt
 from networkx.algorithms import community
 import seaborn as sns
 
+class SketchHeteroData(HeteroData):
+    def __init__(self, node_features, node_labels, connectivity_matrix, temporal_edge_index):
+        super(SketchHeteroData, self).__init__()
+
+        self['stroke'].x = node_features
+        self['stroke'].y = node_labels
+
+        edge_indices = (connectivity_matrix == 1).nonzero(as_tuple=False).t()
+        self['stroke', 'connected', 'stroke'].edge_index = edge_indices
+
+        temporal_edge_tensor = torch.tensor(temporal_edge_index, dtype=torch.long).t().contiguous()
+        self['stroke', 'previous', 'stroke'].edge_index = temporal_edge_tensor
+
+    def to_device(self, device):
+        for key, value in self.items():
+            if torch.is_tensor(value):
+                self[key] = value.to(device)
+
+
 
 def create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_path):
 
@@ -71,7 +90,17 @@ def create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_p
                         connectivity_matrix[stroke_index, intersected_index] = 1
                         connectivity_matrix[intersected_index, stroke_index] = 1
 
-    print("connectivity_matrix", connectivity_matrix)
+
+    #build temporal_edge_index
+    temporal_edge_index = []
+    for i in range (num_strokes -1):
+        temporal_edge_index.append([i+1, i])
+
+    #build stroke graph
+    sketch_graph = SketchHeteroData(node_features, node_label, connectivity_matrix, temporal_edge_index)
+
+    return sketch_graph
+
 
 
 
@@ -82,4 +111,9 @@ stroke_dict_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset
 parsed_features_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset/CAD2Sketch/1069/parsed_features.json'
 final_edges_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset/CAD2Sketch/1069/63.86_149.75_1.4/final_edges.json'
 
-create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_path)
+
+device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+
+graph = create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_path)
+graph.to_device(device)
+
