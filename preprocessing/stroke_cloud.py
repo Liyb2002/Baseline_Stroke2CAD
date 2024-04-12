@@ -2,6 +2,7 @@ from torch.utils.data import Dataset
 import os
 from tqdm import tqdm
 from preprocessing.io_utils import read_json_file
+import gnn_graph
 
 class Stroke_Cloud_Dataset(Dataset):
     def __init__(self, data_path):
@@ -12,13 +13,20 @@ class Stroke_Cloud_Dataset(Dataset):
     def __len__(self):
         return len(self.CAD_stroke_pairs)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx, getGraph = False):
         item = self.CAD_stroke_pairs[idx]
-        CAD_Program = item['CAD_Program']
-        final_edges = item['final_edges']
+        CAD_Program_path = item['CAD_Program']
+        final_edges_path = item['final_edges']
         strokes_dict_path = item['strokes_dict']
 
-        return CAD_Program, final_edges, strokes_dict_path
+        if getGraph:
+            graph = gnn_graph.create_graph_from_json(final_edges_path, CAD_Program_path, strokes_dict_path)
+            return graph
+
+
+        return CAD_Program_path, final_edges_path, strokes_dict_path
+    
+
 
     def get_files(self, data_path):
         CAD_stroke_pairs = []
@@ -38,7 +46,5 @@ class Stroke_Cloud_Dataset(Dataset):
                 if os.path.exists(final_edges_path) and os.path.exists(strokes_dict_path):
                     # final_edges = read_json_file(final_edges_path)
                     CAD_stroke_pairs.append({'CAD_Program': CAD_path, 'final_edges': final_edges_path, 'strokes_dict': strokes_dict_path})
-                    print("final_edges_path", final_edges_path)
-                    print("CAD_path", CAD_path)
                 
         return CAD_stroke_pairs
