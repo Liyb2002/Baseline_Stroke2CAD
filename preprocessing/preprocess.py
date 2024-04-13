@@ -30,3 +30,11 @@ def get_stroke_cloud():
 
     return stroke_cloud_dataset
 
+def get_gnn_graph():
+    #pairing with gnn graphs
+    data_filepath = home_dir / "dataset" / "CAD2Sketch"
+    graph_dataset = Stroke_Cloud_Dataset(data_filepath)
+    graph_dataset.use_graph()
+
+    return graph_dataset
+

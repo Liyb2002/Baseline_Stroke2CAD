@@ -1,6 +1,6 @@
 import os
 import torch
-from io_utils import read_json_file
+from preprocessing.io_utils import read_json_file
 
 import os
 import sys

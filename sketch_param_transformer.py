@@ -13,7 +13,6 @@ import operation_transformer
 import preprocessing.stroke_graph
 import utils.face_aggregate
 
-import models.LineEmbedding
 
 def train_sketch_param_transformer(dataset, device, batch_size=8, learning_rate=5e-4):
 

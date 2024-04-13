@@ -2,30 +2,33 @@ from torch.utils.data import Dataset
 import os
 from tqdm import tqdm
 from preprocessing.io_utils import read_json_file
-import gnn_graph
+import preprocessing.gnn_graph
 
 class Stroke_Cloud_Dataset(Dataset):
     def __init__(self, data_path):
         self.data_path = data_path
         self.CAD_stroke_pairs = self.get_files(data_path)
+        self.return_graph = False
         print("loaded CAD_stroke_pairs: ", len(self.CAD_stroke_pairs))
 
     def __len__(self):
         return len(self.CAD_stroke_pairs)
 
-    def __getitem__(self, idx, getGraph = False):
+    def __getitem__(self, idx):
         item = self.CAD_stroke_pairs[idx]
         CAD_Program_path = item['CAD_Program']
         final_edges_path = item['final_edges']
         strokes_dict_path = item['strokes_dict']
 
-        if getGraph:
-            graph = gnn_graph.create_graph_from_json(final_edges_path, CAD_Program_path, strokes_dict_path)
+        if self.return_graph:
+            graph = preprocessing.gnn_graph.create_graph_from_json(final_edges_path, CAD_Program_path, strokes_dict_path)
             return graph
-
 
         return CAD_Program_path, final_edges_path, strokes_dict_path
     
+
+    def use_graph(self, return_graph=True):
+        self.return_graph = return_graph
 
 
     def get_files(self, data_path):
