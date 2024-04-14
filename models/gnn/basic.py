@@ -118,17 +118,26 @@ class GeneralHeteroConv(torch.nn.Module):
         return res   
     
 class ResidualGeneralHeteroConvBlock(torch.nn.Module):
-    def __init__(self, gcn_types, in_channels, out_channels, is_instance_net = False):
+    def __init__(self, gcn_types, in_channels, out_channels, is_instance_net=False):
         super(ResidualGeneralHeteroConvBlock, self).__init__()
         self.mlp_edge_conv = GeneralHeteroConv(gcn_types, in_channels, out_channels, is_instance_net)
+        self.residual = (in_channels == out_channels)
+        
+        # If input and output dimensions differ, a transformation is needed for the residual connection
+        if not self.residual:
+            self.projection = nn.Linear(in_channels, out_channels)
 
-    def forward(self, x_dict, edge_index_dict, edge_attr_dict = None, data=None):
-        """
-        x: (BxN) x F
-        """
+    def forward(self, x_dict, edge_index_dict, edge_attr_dict=None, data=None):
+        residual = x_dict['stroke']
         out = self.mlp_edge_conv(x_dict, edge_index_dict, edge_attr_dict, data)
-        out['stroke'] += x_dict['stroke']
-        return out  
+
+        if self.residual:
+            out['stroke'] += residual
+        else:
+            # Transform the residual to the correct dimension before adding
+            out['stroke'] += self.projection(residual)
+
+        return out
     
 class GCNEncoder(torch.nn.Module):
     def __init__(self, in_channels, out_channels):

@@ -7,32 +7,39 @@ from torch_geometric.data import HeteroData
 import models.gnn.basic
 
 class SemanticModule(nn.Module):
-    def __init__(self, in_channels = 6, out_channels = 32, num_classes = 7):
+    def __init__(self, in_channels=6, hidden_channels=32, mlp_channels=[128, 64, 32], num_classes=3):
         super(SemanticModule, self).__init__()
         self.layers = nn.ModuleList([
-            models.gnn.basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], in_channels, out_channels),
-            models.gnn.basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], out_channels, out_channels)
+            models.gnn.basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], in_channels, hidden_channels),
+            models.gnn.basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], hidden_channels, hidden_channels),
+            models.gnn.basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], hidden_channels, mlp_channels[0])
         ])
-        self.classifier = nn.Linear(out_channels, num_classes)  
+
+        self.mlp = models.gnn.basic.MLPLinear(mlp_channels)
 
     def forward(self, x_dict, edge_index_dict):
         for layer in self.layers:
             x_dict = layer(x_dict, edge_index_dict)
-        x = x_dict['stroke']
-        return self.classifier(x)
+        x = self.mlp(x_dict['stroke'])
+
+        return x
 
 
 class InstanceModule(nn.Module):
-    def __init__(self, in_channels = 6, out_channels = 32):
+    def __init__(self, in_channels=6, hidden_channels=32, mlp_channels=[128, 64, 32]):
         super(InstanceModule, self).__init__()
-        self.encoder = SemanticModule(in_channels, out_channels)
+        num_classes = 6  # Assuming binary classification for instance prediction
+        
+        # Use the last dimension of mlp_channels as in_features for the decoder
+        in_features_decoder = mlp_channels[-1]
+
+        self.encoder = SemanticModule(in_channels, hidden_channels, mlp_channels, num_classes)
         self.decoder = nn.Sequential(
-            nn.Linear(out_channels, out_channels),
+            nn.Linear(in_features_decoder, hidden_channels),  # Adjusted to match output of SemanticModule
             nn.ReLU(inplace=True),
-            nn.Linear(out_channels, 1)  # Binary output for edge existence
+            nn.Linear(hidden_channels, num_classes)  # Output size is 1 for binary classification
         )
 
     def forward(self, x_dict, edge_index_dict):
-        x_dict = self.encoder(x_dict, edge_index_dict)
-        x = x_dict['stroke']
-        return torch.sigmoid(self.decoder(x))
+        features = self.encoder(x_dict, edge_index_dict)  # Features is a tensor now, not a dictionary
+        return torch.sigmoid(self.decoder(features))  # Apply decoder to features
