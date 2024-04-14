@@ -30,9 +30,10 @@ def train_gnn_param_prediction(dataset, device, batch_size=8, learning_rate=5e-4
 
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    criterion = torch.nn.CrossEntropyLoss()  
 
     epoch = 0
-    for i in range (1):
+    for i in range (5):
         epoch += 1
         model.train()
         total_train_loss = 0
@@ -40,8 +41,14 @@ def train_gnn_param_prediction(dataset, device, batch_size=8, learning_rate=5e-4
         for batch in tqdm(train_loader):
             gnn_graph = batch[0]
             predictions = model(gnn_graph.x_dict, gnn_graph.edge_index_dict)
-            print("predictions", predictions)
+            labels = gnn_graph['stroke'].y.long()
+            
+            print("predictions", predictions.shape)
+            print("labels", labels.shape)
 
+            loss = criterion(predictions, labels)
+            total_train_loss += loss.item()
+            loss.backward()
 
 
 

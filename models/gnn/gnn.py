@@ -28,18 +28,17 @@ class SemanticModule(nn.Module):
 class InstanceModule(nn.Module):
     def __init__(self, in_channels=6, hidden_channels=32, mlp_channels=[128, 64, 32]):
         super(InstanceModule, self).__init__()
-        num_classes = 6  # Assuming binary classification for instance prediction
+        num_classes = 10
         
-        # Use the last dimension of mlp_channels as in_features for the decoder
         in_features_decoder = mlp_channels[-1]
 
         self.encoder = SemanticModule(in_channels, hidden_channels, mlp_channels, num_classes)
         self.decoder = nn.Sequential(
-            nn.Linear(in_features_decoder, hidden_channels),  # Adjusted to match output of SemanticModule
+            nn.Linear(in_features_decoder, hidden_channels),  
             nn.ReLU(inplace=True),
-            nn.Linear(hidden_channels, num_classes)  # Output size is 1 for binary classification
+            nn.Linear(hidden_channels, num_classes)  
         )
 
     def forward(self, x_dict, edge_index_dict):
-        features = self.encoder(x_dict, edge_index_dict)  # Features is a tensor now, not a dictionary
-        return torch.sigmoid(self.decoder(features))  # Apply decoder to features
+        features = self.encoder(x_dict, edge_index_dict)
+        return torch.sigmoid(self.decoder(features))  

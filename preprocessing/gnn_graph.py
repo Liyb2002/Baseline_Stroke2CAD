@@ -97,7 +97,7 @@ def create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_p
         temporal_edge_index.append([i+1, i])
 
     #build stroke graph
-    sketch_graph = SketchHeteroData(node_features, node_label, connectivity_matrix, temporal_edge_index)
+    sketch_graph = SketchHeteroData(node_features, node_labels, connectivity_matrix, temporal_edge_index)
 
     return sketch_graph
 
