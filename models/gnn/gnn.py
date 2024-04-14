@@ -7,7 +7,7 @@ from torch_geometric.data import HeteroData
 import models.gnn.basic
 
 class SemanticModule(nn.Module):
-    def __init__(self, in_channels=6, hidden_channels=32, mlp_channels=[128, 64, 32], num_classes=3):
+    def __init__(self, in_channels=6, hidden_channels=32, mlp_channels=[128, 64, 32], num_classes = 10):
         super(SemanticModule, self).__init__()
         self.layers = nn.ModuleList([
             models.gnn.basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], in_channels, hidden_channels),

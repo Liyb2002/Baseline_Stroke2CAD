@@ -123,7 +123,6 @@ class ResidualGeneralHeteroConvBlock(torch.nn.Module):
         self.mlp_edge_conv = GeneralHeteroConv(gcn_types, in_channels, out_channels, is_instance_net)
         self.residual = (in_channels == out_channels)
         
-        # If input and output dimensions differ, a transformation is needed for the residual connection
         if not self.residual:
             self.projection = nn.Linear(in_channels, out_channels)
 
@@ -134,7 +133,6 @@ class ResidualGeneralHeteroConvBlock(torch.nn.Module):
         if self.residual:
             out['stroke'] += residual
         else:
-            # Transform the residual to the correct dimension before adding
             out['stroke'] += self.projection(residual)
 
         return out

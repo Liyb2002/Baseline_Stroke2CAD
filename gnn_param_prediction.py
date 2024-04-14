@@ -16,7 +16,7 @@ import preprocessing.stroke_graph
 import utils.face_aggregate
 
 
-def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4, epochs=5):
+def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4, epochs=20):
     model = models.gnn.gnn.InstanceModule()  # Assume InstanceModule is correctly imported and defined
     model.to(device)
 
@@ -45,6 +45,7 @@ def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4
             optimizer.zero_grad()  
             gnn_graph = batch[0]
             predictions = model(gnn_graph.x_dict, gnn_graph.edge_index_dict)
+            # print("predictions", predictions.shape)
             labels = gnn_graph['stroke'].y.to(device).long()
             
             loss = criterion(predictions, labels)
@@ -74,6 +75,12 @@ def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4
 
 
 
+def get_class_predictions(predictions):
+    _, predicted_classes = torch.max(predictions, dim=1)
+    return predicted_classes.unsqueeze(1)
+
+def filter_predictions_by_class(predicted_classes, class_index):
+    return (predicted_classes == class_index).nonzero(as_tuple=False).squeeze()
 
 def run_gnn_param_prediction():
     gnn_cloud_dataset = preprocessing.preprocess.get_gnn_graph()
@@ -90,8 +97,19 @@ def run_gnn_param_prediction():
     with torch.no_grad():
         predictions = gnn_Predictor_model(x_dict, edge_index_dict)
     
-    # Handle or return the predictions
-    print("Predictions:", predictions.shape)
+    predicted_classes = get_class_predictions(predictions)
+    print("Predicted class indices:", predicted_classes)
+
+    class_of_interest = 1
+    indices_of_class = filter_predictions_by_class(predicted_classes, class_of_interest)
+    print(f"Indices of strokes predicted as class {class_of_interest}:", indices_of_class)
+
+    ground_truth_labels = example_graph['stroke'].y.to(device)
+    print("Ground truth labels:", ground_truth_labels)
+
+
+
+
     return predictions
 
 
