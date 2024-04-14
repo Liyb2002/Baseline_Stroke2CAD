@@ -1,6 +1,5 @@
 import os
 import torch
-from preprocessing.io_utils import read_json_file
 
 import os
 import sys
@@ -12,6 +11,7 @@ import networkx as nx
 from matplotlib import pyplot as plt
 from networkx.algorithms import community
 import seaborn as sns
+import preprocessing.io_utils
 
 class SketchHeteroData(HeteroData):
     def __init__(self, node_features, node_labels, connectivity_matrix, temporal_edge_index):
@@ -35,9 +35,9 @@ class SketchHeteroData(HeteroData):
 
 def create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_path):
 
-    final_edges_json = read_json_file(final_edges_path)
-    parsed_features_json = read_json_file(parsed_features_path)
-    stroke_dict_json = read_json_file(stroke_dict_path)
+    final_edges_json = preprocessing.io_utils.read_json_file(final_edges_path)
+    parsed_features_json = preprocessing.io_utils.read_json_file(parsed_features_path)
+    stroke_dict_json = preprocessing.io_utils.read_json_file(stroke_dict_path)
 
     #parse parsed_features
     parsed_features_sequence = {}

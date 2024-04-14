@@ -46,6 +46,7 @@ def train_gnn_param_prediction(dataset, device, batch_size=8, learning_rate=5e-4
 def run_gnn_param_prediction():
     gnn_cloud_dataset = preprocessing.preprocess.get_gnn_graph()
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    device = 'cpu'
     gnn_Predictor_model = train_gnn_param_prediction(gnn_cloud_dataset, device)
 
 

@@ -8,27 +8,28 @@ class Stroke_Cloud_Dataset(Dataset):
     def __init__(self, data_path):
         self.data_path = data_path
         self.CAD_stroke_pairs = self.get_files(data_path)
-        self.return_graph = False
         print("loaded CAD_stroke_pairs: ", len(self.CAD_stroke_pairs))
+        self.getGraph = False
 
     def __len__(self):
         return len(self.CAD_stroke_pairs)
 
-    def __getitem__(self, idx):
+    def returnGraph(self, getGraph = True):
+        self.getGraph = True
+
+    def __getitem__(self, idx, getGraph = False):
         item = self.CAD_stroke_pairs[idx]
         CAD_Program_path = item['CAD_Program']
         final_edges_path = item['final_edges']
         strokes_dict_path = item['strokes_dict']
 
-        if self.return_graph:
+        if self.getGraph:
             graph = preprocessing.gnn_graph.create_graph_from_json(final_edges_path, CAD_Program_path, strokes_dict_path)
             return graph
 
+
         return CAD_Program_path, final_edges_path, strokes_dict_path
     
-
-    def use_graph(self, return_graph=True):
-        self.return_graph = return_graph
 
 
     def get_files(self, data_path):
