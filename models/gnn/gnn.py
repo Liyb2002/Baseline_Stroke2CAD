@@ -4,14 +4,14 @@ import torch.nn.functional as F
 from torch_geometric.nn import HeteroConv, GCNConv, EdgeConv
 from torch_geometric.data import HeteroData
 
-import basic
+import models.gnn.basic
 
 class SemanticModule(nn.Module):
-    def __init__(self, in_channels, out_channels, num_classes = 7):
+    def __init__(self, in_channels = 6, out_channels = 32, num_classes = 7):
         super(SemanticModule, self).__init__()
         self.layers = nn.ModuleList([
-            basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], in_channels, out_channels),
-            basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], out_channels, out_channels)
+            models.gnn.basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], in_channels, out_channels),
+            models.gnn.basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], out_channels, out_channels)
         ])
         self.classifier = nn.Linear(out_channels, num_classes)  
 
@@ -23,7 +23,7 @@ class SemanticModule(nn.Module):
 
 
 class InstanceModule(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels = 6, out_channels = 32):
         super(InstanceModule, self).__init__()
         self.encoder = SemanticModule(in_channels, out_channels)
         self.decoder = nn.Sequential(

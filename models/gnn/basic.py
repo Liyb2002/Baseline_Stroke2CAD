@@ -1,11 +1,10 @@
 import torch.nn as nn
 from torch_geometric.nn import EdgeConv, HeteroConv, GCNConv
 from torch_geometric.nn.models import MLP
-from .basic import MLPLinear
 import numpy as np
 from torch_geometric.nn import aggr
-import torch_scatter
 from torch_geometric.utils import scatter
+import torch
 
 
 from torch_geometric.nn.conv import MessagePassing

@@ -8,7 +8,7 @@ import os
 
 import preprocessing.preprocess
 import preprocessing.collate_fn
-import models.sketch_param_model
+import models.gnn.gnn
 import data_structure.stroke_class
 import onshape.parse_CAD
 import operation_transformer
@@ -17,7 +17,7 @@ import utils.face_aggregate
 
 
 def train_gnn_param_prediction(dataset, device, batch_size=8, learning_rate=5e-4,):
-    model = models.sketch_param_model.SketchPredictor()
+    model = models.gnn.gnn.InstanceModule()
     model.to(device)
     
     total_size = len(dataset)
@@ -38,8 +38,10 @@ def train_gnn_param_prediction(dataset, device, batch_size=8, learning_rate=5e-4
         total_train_loss = 0
 
         for batch in tqdm(train_loader):
-            gnn_graph = batch
-            print("gnn_graph", gnn_graph[0])
+            gnn_graph = batch[0]
+            predictions = model(gnn_graph.x_dict, gnn_graph.edge_index_dict)
+            print("predictions", predictions)
+
 
 
 
