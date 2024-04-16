@@ -16,7 +16,7 @@ import preprocessing.stroke_graph
 import utils.face_aggregate
 
 
-def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4, epochs=20):
+def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4, epochs=5):
     model = models.gnn.gnn.InstanceModule()  # Assume InstanceModule is correctly imported and defined
     model.to(device)
 
@@ -100,7 +100,7 @@ def run_gnn_param_prediction():
     predicted_classes = get_class_predictions(predictions)
     print("Predicted class indices:", predicted_classes)
 
-    class_of_interest = 1
+    class_of_interest = 0
     indices_of_class = filter_predictions_by_class(predicted_classes, class_of_interest)
     print(f"Indices of strokes predicted as class {class_of_interest}:", indices_of_class)
 
