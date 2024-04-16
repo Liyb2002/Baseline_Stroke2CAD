@@ -7,10 +7,14 @@ from torch_geometric.data import HeteroData
 import models.gnn.basic
 
 class SemanticModule(nn.Module):
-    def __init__(self, in_channels=6, hidden_channels=32, mlp_channels=[128, 64, 32], num_classes = 10):
+    def __init__(self, in_channels=6, hidden_channels=32, mlp_channels=[64, 32], num_classes = 10):
         super(SemanticModule, self).__init__()
+        self.local_head = models.gnn.basic.GeneralHeteroConv(['temp_previous_add', 'intersects_mean'], in_channels, hidden_channels)
+
+
         self.layers = nn.ModuleList([
-            models.gnn.basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], in_channels, hidden_channels),
+            models.gnn.basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], hidden_channels, hidden_channels),
+            models.gnn.basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], hidden_channels, hidden_channels),
             models.gnn.basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], hidden_channels, hidden_channels),
             models.gnn.basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], hidden_channels, mlp_channels[0])
         ])
@@ -18,6 +22,9 @@ class SemanticModule(nn.Module):
         self.mlp = models.gnn.basic.MLPLinear(mlp_channels)
 
     def forward(self, x_dict, edge_index_dict):
+
+        x_dict = self.local_head(x_dict, edge_index_dict)
+
         for layer in self.layers:
             x_dict = layer(x_dict, edge_index_dict)
         x = self.mlp(x_dict['stroke'])
@@ -26,7 +33,7 @@ class SemanticModule(nn.Module):
 
 
 class InstanceModule(nn.Module):
-    def __init__(self, in_channels=6, hidden_channels=32, mlp_channels=[128, 64, 32]):
+    def __init__(self, in_channels=6, hidden_channels=32, mlp_channels= [64, 32]):
         super(InstanceModule, self).__init__()
         num_classes = 10
         

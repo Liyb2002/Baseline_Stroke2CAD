@@ -69,7 +69,7 @@ def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4
         avg_val_loss = total_val_loss / len(validation_loader)
         print(f"Epoch {epoch + 1}/{epochs} - Validation Loss: {avg_val_loss:.4f}")
 
-    preprocessing.io_utils.save_model(model, "gnn_model")
+    # preprocessing.io_utils.save_model(model, "gnn_model")
 
     return model
 
