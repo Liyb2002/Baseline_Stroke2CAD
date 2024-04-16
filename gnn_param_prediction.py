@@ -15,6 +15,7 @@ import operation_transformer
 import preprocessing.stroke_graph
 import utils.face_aggregate
 import utils.plotting
+import build123.protocol
 
 def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4, epochs=200):
     model = models.gnn.gnn.InstanceModule()  # Assume InstanceModule is correctly imported and defined
@@ -131,6 +132,7 @@ def run_gnn_param_prediction():
     for (plane, plane_stroke_id) in zip (planes, plane_stroke_ids):
         # preprocessing.stroke_graph.plot_3D(plane)
         print("plane_stroke_id", plane_stroke_id)
+        print("plane", plane)
 
         # confidence = 0
         # for id in plane_stroke_id:
@@ -139,12 +141,7 @@ def run_gnn_param_prediction():
         
         # print("confidence", confidence)
 
-
-
-
-
-
-
+    build123.protocol.build_sketch()
     return predictions
 
 
