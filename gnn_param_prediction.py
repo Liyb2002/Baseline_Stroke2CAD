@@ -86,6 +86,15 @@ def get_class_predictions(predictions):
 def filter_predictions_by_class(predicted_classes, class_index):
     return (predicted_classes == class_index).nonzero(as_tuple=False).squeeze()
 
+def get_top_strokes_for_label(predictions, label_index, top_k=10):
+    if label_index >= predictions.shape[1]:
+        raise ValueError("label_index is out of bounds of the prediction matrix second dimension")
+    
+    label_scores = predictions[:, label_index]
+    top_strokes_indices = torch.topk(label_scores, k=top_k, largest=True, sorted=True)[1]
+    
+    return top_strokes_indices
+
 def run_gnn_param_prediction():
     gnn_cloud_dataset = preprocessing.preprocess.get_gnn_graph()
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
@@ -93,7 +102,7 @@ def run_gnn_param_prediction():
     gnn_Predictor_model = train_gnn_param_prediction(gnn_cloud_dataset, device)
 
     example_graph = gnn_cloud_dataset[0]
-    utils.plotting.plot_3d_graph_strokes(example_graph)
+    # utils.plotting.plot_3d_graph_strokes(example_graph)
 
     x_dict = example_graph.x_dict
     edge_index_dict = example_graph.edge_index_dict
@@ -103,15 +112,35 @@ def run_gnn_param_prediction():
     with torch.no_grad():
         predictions = gnn_Predictor_model(x_dict, edge_index_dict)
     
-    predicted_classes = get_class_predictions(predictions)
-    print("Predicted class indices:", predicted_classes)
+    # predicted_classes = get_class_predictions(predictions)
+    # print("Predicted class indices:", predicted_classes)
 
     class_of_interest = 0
-    indices_of_class = filter_predictions_by_class(predicted_classes, class_of_interest)
-    print(f"Indices of strokes predicted as class {class_of_interest}:", indices_of_class)
+    # indices_of_class = filter_predictions_by_class(predicted_classes, class_of_interest)
+    # print(f"Indices of strokes predicted as class {class_of_interest}:", indices_of_class)
 
-    ground_truth_labels = example_graph['stroke'].y.to(device)
-    print("Ground truth labels:", ground_truth_labels)
+    top_strokes_indices = get_top_strokes_for_label(predictions, class_of_interest)
+    print("top_strokes_indices", top_strokes_indices)
+
+    # ground_truth_labels = example_graph['stroke'].y.to(device)
+    # print("Ground truth labels:", ground_truth_labels)
+
+
+    planes, plane_stroke_ids = utils.face_aggregate.find_planes_gnn(top_strokes_indices, example_graph)
+
+    for (plane, plane_stroke_id) in zip (planes, plane_stroke_ids):
+        # preprocessing.stroke_graph.plot_3D(plane)
+        print("plane_stroke_id", plane_stroke_id)
+
+        # confidence = 0
+        # for id in plane_stroke_id:
+        #     prob = flat_matrix[id]
+        #     confidence += prob / len(plane_stroke_id)
+        
+        # print("confidence", confidence)
+
+
+
 
 
 

@@ -26,6 +26,8 @@ class SketchHeteroData(HeteroData):
         temporal_edge_tensor = torch.tensor(temporal_edge_index, dtype=torch.long).t().contiguous()
         self['stroke', 'temp_previous', 'stroke'].edge_index = temporal_edge_tensor
 
+        self.connectivity_matrix = connectivity_matrix
+
     def to_device(self, device):
         for key, value in self.items():
             if torch.is_tensor(value):
@@ -104,17 +106,17 @@ def create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_p
 
 
 
-def build_graph_example():
-    stroke_dict_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset/CAD2Sketch/1069/63.86_149.75_1.4/strokes_dict.json'
-    parsed_features_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset/CAD2Sketch/1069/parsed_features.json'
-    final_edges_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset/CAD2Sketch/1069/63.86_149.75_1.4/final_edges.json'
+# def build_graph_example():
+#     stroke_dict_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset/CAD2Sketch/1069/63.86_149.75_1.4/strokes_dict.json'
+#     parsed_features_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset/CAD2Sketch/1069/parsed_features.json'
+#     final_edges_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset/CAD2Sketch/1069/63.86_149.75_1.4/final_edges.json'
 
 
-    device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+#     device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
 
-    graph = create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_path)
-    graph.to_device(device)
+#     graph = create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_path)
+#     graph.to_device(device)
 
 
 
-build_graph_example()
+# build_graph_example()
