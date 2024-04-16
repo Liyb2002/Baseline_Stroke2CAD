@@ -11,13 +11,11 @@ def plot_3d_graph_strokes(graph):
     node_features = graph['stroke'].x
     node_labels = graph['stroke'].y
 
-    # Check if tensors are on GPU and move them to CPU if necessary
     if node_features.is_cuda:
         node_features = node_features.cpu()
     if node_labels.is_cuda:
         node_labels = node_labels.cpu()
 
-    # Convert tensors to numpy arrays
     node_features = node_features.numpy()
     node_labels = node_labels.numpy()
 
