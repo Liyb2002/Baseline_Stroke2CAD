@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import HeteroConv, GCNConv, EdgeConv, SAGEConv
+from torch_geometric.nn import HeteroConv, GCNConv, EdgeConv
 from torch_geometric.data import HeteroData
 
 import models.gnn.basic
@@ -40,17 +40,12 @@ class InstanceModule(nn.Module):
         in_features_decoder = mlp_channels[-1]
 
         self.encoder = SemanticModule(in_channels, hidden_channels, mlp_channels, num_classes)
-        self.net1 = SAGEConv(hidden_channels, hidden_channels)  # Adjusted for hidden_channels output from encoder
-        self.net2 = SAGEConv(hidden_channels, num_classes)      # Output the number of classes
+        self.decoder = nn.Sequential(
+            nn.Linear(in_features_decoder, hidden_channels),  
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden_channels, num_classes)  
+        )
 
     def forward(self, x_dict, edge_index_dict):
-        x = self.encoder(x_dict, edge_index_dict) # Assuming 'stroke' is the feature matrix
-        
-        # Apply Graph SAGE Convolutions, assuming edge_index_dict contains the correct edge indices for each layer
-        edge_index = edge_index_dict[('stroke', 'intersects', 'stroke')]
-
-        # Apply Graph SAGE Convolutions, using the specified edge indices
-        x = F.relu(self.net1(x, edge_index))  # Apply first SAGEConv with ReLU activation
-        x = self.net2(x, edge_index)  # Output raw logits suitable for loss computation
-
-        return x
+        features = self.encoder(x_dict, edge_index_dict)
+        return torch.sigmoid(self.decoder(features))  

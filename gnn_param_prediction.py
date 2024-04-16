@@ -14,16 +14,16 @@ import onshape.parse_CAD
 import operation_transformer
 import preprocessing.stroke_graph
 import utils.face_aggregate
+import utils.plotting
 
-
-def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4, epochs=5):
+def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4, epochs=200):
     model = models.gnn.gnn.InstanceModule()  # Assume InstanceModule is correctly imported and defined
     model.to(device)
 
-    # checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "gnn_model", "gnn_model" + ".ckpt")
-    # loaded_model = preprocessing.io_utils.load_model(model, checkpoint_path)
-    # if loaded_model is not None:
-    #     return loaded_model
+    checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "gnn_model", "gnn_model" + ".ckpt")
+    loaded_model = preprocessing.io_utils.load_model(model, checkpoint_path)
+    if loaded_model is not None:
+        return loaded_model
 
     
     total_size = len(dataset)
@@ -67,9 +67,13 @@ def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4
                 total_val_loss += loss.item()
 
         avg_val_loss = total_val_loss / len(validation_loader)
+
+        if avg_val_loss < 0.8:
+            break
+
         print(f"Epoch {epoch + 1}/{epochs} - Validation Loss: {avg_val_loss:.4f}")
 
-    # preprocessing.io_utils.save_model(model, "gnn_model")
+    # preprocessing.io_utils.save_model(model, "gnn_model_new")
 
     return model
 
@@ -89,6 +93,8 @@ def run_gnn_param_prediction():
     gnn_Predictor_model = train_gnn_param_prediction(gnn_cloud_dataset, device)
 
     example_graph = gnn_cloud_dataset[0]
+    utils.plotting.plot_3d_graph_strokes(example_graph)
+
     x_dict = example_graph.x_dict
     edge_index_dict = example_graph.edge_index_dict
 
