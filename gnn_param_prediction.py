@@ -127,12 +127,12 @@ def run_gnn_param_prediction():
     # print("Ground truth labels:", ground_truth_labels)
 
 
-    planes, plane_stroke_ids = utils.face_aggregate.find_planes_gnn(top_strokes_indices, example_graph)
+    plane_points_list, plane_stroke_ids = utils.face_aggregate.find_planes_gnn(top_strokes_indices, example_graph)
 
-    for (plane, plane_stroke_id) in zip (planes, plane_stroke_ids):
+    # for (plane, plane_stroke_id) in zip (planes, plane_stroke_ids):
         # preprocessing.stroke_graph.plot_3D(plane)
-        print("plane_stroke_id", plane_stroke_id)
-        print("plane", plane)
+        # print("plane_stroke_id", plane_stroke_id)
+        # print("plane", plane)
 
         # confidence = 0
         # for id in plane_stroke_id:
@@ -140,8 +140,11 @@ def run_gnn_param_prediction():
         #     confidence += prob / len(plane_stroke_id)
         
         # print("confidence", confidence)
+    
+    build123.protocol.build_sketch(plane_points_list[0])
 
-    build123.protocol.build_sketch()
+    print("unique points for plane", utils.face_aggregate.find_unique_points(plane_points_list[0]))
+    print("ids", plane_stroke_ids[0])
     return predictions
 
 
