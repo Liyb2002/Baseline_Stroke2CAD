@@ -11,14 +11,15 @@ import networkx as nx
 from matplotlib import pyplot as plt
 from networkx.algorithms import community
 import seaborn as sns
-import preprocessing.io_utils
+import io_utils
 
 class SketchHeteroData(HeteroData):
-    def __init__(self, node_features, node_labels, connectivity_matrix, temporal_edge_index):
+    def __init__(self, node_features, node_labels, grouping_matrix, connectivity_matrix, temporal_edge_index):
         super(SketchHeteroData, self).__init__()
 
         self['stroke'].x = node_features
         self['stroke'].y = node_labels
+        self['stroke'].z = grouping_matrix
 
         edge_indices = (connectivity_matrix == 1).nonzero(as_tuple=False).t()
         self['stroke', 'intersects', 'stroke'].edge_index = edge_indices
@@ -34,12 +35,27 @@ class SketchHeteroData(HeteroData):
                 self[key] = value.to(device)
 
 
+def build_stroke_to_labels_map(final_edges_json):
+    stroke_to_labels = {}
+    for i, key in enumerate(final_edges_json.keys()):
+        stroke = final_edges_json[key]
+        labels = [stroke["feature_id"]]
+        
+        for original_label in stroke["original_labels"]:
+            labels.append(original_label["feature_id"])
+        
+        labels = list(set(labels))
+        
+        stroke_to_labels[i] = labels
+    
+    return stroke_to_labels
+
 
 def create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_path):
 
-    final_edges_json = preprocessing.io_utils.read_json_file(final_edges_path)
-    parsed_features_json = preprocessing.io_utils.read_json_file(parsed_features_path)
-    stroke_dict_json = preprocessing.io_utils.read_json_file(stroke_dict_path)
+    final_edges_json = io_utils.read_json_file(final_edges_path)
+    parsed_features_json = io_utils.read_json_file(parsed_features_path)
+    stroke_dict_json = io_utils.read_json_file(stroke_dict_path)
 
     #parse parsed_features
     parsed_features_sequence = {}
@@ -92,6 +108,22 @@ def create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_p
                         connectivity_matrix[stroke_index, intersected_index] = 1
                         connectivity_matrix[intersected_index, stroke_index] = 1
 
+    #build grouping matrix
+    #grouping_matrix has shape n_strokes x n_strokes
+    stroke_to_labels = build_stroke_to_labels_map(final_edges_json)
+
+
+    grouping_matrix = torch.zeros((num_strokes, num_strokes))
+    for i in range(num_strokes):
+        labels_i = stroke_to_labels[i]
+
+        for j in range(i, num_strokes):
+            labels_j = stroke_to_labels[j]
+            if any(label in labels_j for label in labels_i):
+                grouping_matrix[i, j] = 1
+                grouping_matrix[j, i] = 1
+
+
 
     #build temporal_edge_index
     temporal_edge_index = []
@@ -99,7 +131,7 @@ def create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_p
         temporal_edge_index.append([i+1, i])
 
     #build stroke graph
-    sketch_graph = SketchHeteroData(node_features, node_labels, connectivity_matrix, temporal_edge_index)
+    sketch_graph = SketchHeteroData(node_features, node_labels, grouping_matrix, connectivity_matrix, temporal_edge_index)
 
     return sketch_graph
 
