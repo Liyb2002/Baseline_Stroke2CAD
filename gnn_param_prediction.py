@@ -17,14 +17,14 @@ import utils.face_aggregate
 import utils.plotting
 import build123.protocol
 
-def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4, epochs=200):
+def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4, epochs=50):
     model = models.gnn.gnn.InstanceModule()  # Assume InstanceModule is correctly imported and defined
     model.to(device)
 
-    checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "gnn_model", "gnn_model" + ".ckpt")
-    loaded_model = preprocessing.io_utils.load_model(model, checkpoint_path)
-    if loaded_model is not None:
-        return loaded_model
+    # checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "gnn_model", "gnn_model" + ".ckpt")
+    # loaded_model = preprocessing.io_utils.load_model(model, checkpoint_path)
+    # if loaded_model is not None:
+    #     return loaded_model
 
     
     total_size = len(dataset)
@@ -37,7 +37,7 @@ def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4
     validation_loader = DataLoader(validation_dataset, batch_size=batch_size, shuffle=False, collate_fn=preprocessing.collate_fn.stroke_cloud_collate)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    criterion = torch.nn.CrossEntropyLoss()  
+    criterion = nn.BCEWithLogitsLoss() 
 
     for epoch in range(epochs):
         model.train()
@@ -46,8 +46,8 @@ def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4
             optimizer.zero_grad()  
             gnn_graph = batch[0]
             predictions = model(gnn_graph.x_dict, gnn_graph.edge_index_dict)
-            # print("predictions", predictions.shape)
-            labels = gnn_graph['stroke'].y.to(device).long()
+            # labels = gnn_graph['stroke'].y.to(device).long()
+            labels = gnn_graph['stroke'].z.to(device)
             
             loss = criterion(predictions, labels)
             loss.backward()
@@ -63,7 +63,8 @@ def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4
             for batch in validation_loader:
                 gnn_graph = batch[0]
                 predictions = model(gnn_graph.x_dict, gnn_graph.edge_index_dict)
-                labels = gnn_graph['stroke'].y.to(device).long()
+                # labels = gnn_graph['stroke'].y.to(device).long()
+                labels = gnn_graph['stroke'].z.to(device)
                 loss = criterion(predictions, labels)
                 total_val_loss += loss.item()
 
@@ -74,7 +75,7 @@ def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4
 
         print(f"Epoch {epoch + 1}/{epochs} - Validation Loss: {avg_val_loss:.4f}")
 
-    # preprocessing.io_utils.save_model(model, "gnn_model_new")
+    preprocessing.io_utils.save_model(model, "gnn_model_BCE")
 
     return model
 
@@ -113,6 +114,7 @@ def run_gnn_param_prediction():
     with torch.no_grad():
         predictions = gnn_Predictor_model(x_dict, edge_index_dict)
     
+    print("predictions", predictions.shape)
     # predicted_classes = get_class_predictions(predictions)
     # print("Predicted class indices:", predicted_classes)
 

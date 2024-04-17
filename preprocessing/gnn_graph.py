@@ -11,7 +11,7 @@ import networkx as nx
 from matplotlib import pyplot as plt
 from networkx.algorithms import community
 import seaborn as sns
-import io_utils
+import preprocessing.io_utils
 
 class SketchHeteroData(HeteroData):
     def __init__(self, node_features, node_labels, grouping_matrix, connectivity_matrix, temporal_edge_index):
@@ -53,9 +53,9 @@ def build_stroke_to_labels_map(final_edges_json):
 
 def create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_path):
 
-    final_edges_json = io_utils.read_json_file(final_edges_path)
-    parsed_features_json = io_utils.read_json_file(parsed_features_path)
-    stroke_dict_json = io_utils.read_json_file(stroke_dict_path)
+    final_edges_json = preprocessing.io_utils.read_json_file(final_edges_path)
+    parsed_features_json = preprocessing.io_utils.read_json_file(parsed_features_path)
+    stroke_dict_json = preprocessing.io_utils.read_json_file(stroke_dict_path)
 
     #parse parsed_features
     parsed_features_sequence = {}
