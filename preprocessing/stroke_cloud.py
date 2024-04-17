@@ -36,7 +36,7 @@ class Stroke_Cloud_Dataset(Dataset):
         CAD_stroke_pairs = []
 
         sub_folders = [d for d in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, d))]
-        # sub_folders = sub_folders[:10]
+        sub_folders = sub_folders[:10]
         for sub_folder in tqdm(sub_folders):
             sub_folder_path = os.path.join(data_path, sub_folder)
             CAD_path = os.path.join(sub_folder_path, 'parsed_features.json')

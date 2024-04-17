@@ -35,27 +35,17 @@ class SemanticModule(nn.Module):
 class InstanceModule(nn.Module):
     def __init__(self, in_channels=6, hidden_channels=32, mlp_channels= [64, 32]):
         super(InstanceModule, self).__init__()
+        num_classes = 9
         
-        self.mlp_channels = mlp_channels
+        in_features_decoder = mlp_channels[-1]
 
-        self.encoder = SemanticModule(in_channels, hidden_channels, mlp_channels)
+        self.encoder = SemanticModule(in_channels, hidden_channels, mlp_channels, num_classes)
         self.decoder = nn.Sequential(
-            nn.Linear(mlp_channels[-1], hidden_channels),  
+            nn.Linear(in_features_decoder, hidden_channels),  
             nn.ReLU(inplace=True),
-            nn.Linear(hidden_channels, 1)  
+            nn.Linear(hidden_channels, num_classes)  
         )
 
     def forward(self, x_dict, edge_index_dict):
-        node_features = self.encoder(x_dict, edge_index_dict)
-        num_nodes = node_features.size(0)
-        
-        row_indices, col_indices = torch.meshgrid(torch.arange(num_nodes), torch.arange(num_nodes), indexing='ij')
-        
-        node_features_expanded = node_features.unsqueeze(1).expand(-1, num_nodes, -1)
-        
-        node_pair_features = node_features_expanded[row_indices, col_indices]
-        
-        edge_features = node_pair_features.view(-1, self.mlp_channels[-1])
-        out = self.decoder(edge_features).view(num_nodes, num_nodes)
-
-        return torch.sigmoid(out)
+        features = self.encoder(x_dict, edge_index_dict)
+        return torch.sigmoid(self.decoder(features))  

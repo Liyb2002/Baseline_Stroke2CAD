@@ -13,13 +13,25 @@ from networkx.algorithms import community
 import seaborn as sns
 import preprocessing.io_utils
 
+operations_dict = {
+                        "fillet_line": 0,
+                        "extrude_line": 1,
+                        "sketch": 2,
+                        "feature_line": 3,
+                        "silhouette_line": 4,
+                        "grid_lines": 5,
+                        "section_lines": 6,
+                        "circle_square_line": 7,
+                        "outline": 8
+                    } # taken from line_rendering.py file in CAD2Sketch
+
 class SketchHeteroData(HeteroData):
-    def __init__(self, node_features, node_labels, grouping_matrix, connectivity_matrix, temporal_edge_index):
+    def __init__(self, node_features, node_labels, additional_matrix, connectivity_matrix, temporal_edge_index):
         super(SketchHeteroData, self).__init__()
 
         self['stroke'].x = node_features
         self['stroke'].y = node_labels
-        self['stroke'].z = grouping_matrix
+        self['stroke'].z = additional_matrix
 
         edge_indices = (connectivity_matrix == 1).nonzero(as_tuple=False).t()
         self['stroke', 'intersects', 'stroke'].edge_index = edge_indices
@@ -49,6 +61,26 @@ def build_stroke_to_labels_map(final_edges_json):
         stroke_to_labels[i] = labels
     
     return stroke_to_labels
+
+
+def build_stroke_to_operation_map(final_edges_json):
+    num_strokes = len(final_edges_json)
+    num_operations = len(operations_dict)
+    stroke_to_operation = torch.zeros((num_strokes, num_operations))
+
+    for i, key in enumerate(final_edges_json.keys()):
+        stroke = final_edges_json[key]
+        operations = [stroke["type"]]
+
+        for original_label in stroke["original_labels"]:
+            operations.append(original_label["type"])
+        
+        operations = set(operations)
+        for operation in operations:
+            op_index = operations_dict[operation]  
+            stroke_to_operation[i, op_index] = 1  
+    
+    return stroke_to_operation
 
 
 def create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_path):
@@ -110,19 +142,23 @@ def create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_p
 
     #build grouping matrix
     #grouping_matrix has shape n_strokes x n_strokes
-    stroke_to_labels = build_stroke_to_labels_map(final_edges_json)
+    # stroke_to_labels = build_stroke_to_labels_map(final_edges_json)
+
+    # grouping_matrix = torch.zeros((num_strokes, num_strokes))
+    # for i in range(num_strokes):
+    #     labels_i = stroke_to_labels[i]
+
+    #     for j in range(i, num_strokes):
+    #         labels_j = stroke_to_labels[j]
+    #         if any(label in labels_j for label in labels_i):
+    #             grouping_matrix[i, j] = 1
+    #             grouping_matrix[j, i] = 1
 
 
-    grouping_matrix = torch.zeros((num_strokes, num_strokes))
-    for i in range(num_strokes):
-        labels_i = stroke_to_labels[i]
 
-        for j in range(i, num_strokes):
-            labels_j = stroke_to_labels[j]
-            if any(label in labels_j for label in labels_i):
-                grouping_matrix[i, j] = 1
-                grouping_matrix[j, i] = 1
-
+    #build stroke_to_operation matrix
+    #stroke_to_operation matrix has shape n_strokes x n_operations
+    stroke_to_operation = build_stroke_to_operation_map(final_edges_json)
 
 
     #build temporal_edge_index
@@ -131,24 +167,24 @@ def create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_p
         temporal_edge_index.append([i+1, i])
 
     #build stroke graph
-    sketch_graph = SketchHeteroData(node_features, node_labels, grouping_matrix, connectivity_matrix, temporal_edge_index)
+    sketch_graph = SketchHeteroData(node_features, node_labels, stroke_to_operation, connectivity_matrix, temporal_edge_index)
 
     return sketch_graph
 
 
 
 
-# def build_graph_example():
-#     stroke_dict_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset/CAD2Sketch/1069/63.86_149.75_1.4/strokes_dict.json'
-#     parsed_features_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset/CAD2Sketch/1069/parsed_features.json'
-#     final_edges_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset/CAD2Sketch/1069/63.86_149.75_1.4/final_edges.json'
+def build_graph_example():
+    stroke_dict_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset/CAD2Sketch/1069/63.86_149.75_1.4/strokes_dict.json'
+    parsed_features_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset/CAD2Sketch/1069/parsed_features.json'
+    final_edges_path = '/Users/yuanboli/Documents/GitHub/Baseline_Stroke2CAD/dataset/CAD2Sketch/1069/63.86_149.75_1.4/final_edges.json'
 
 
-#     device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+    device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
 
-#     graph = create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_path)
-#     graph.to_device(device)
+    graph = create_graph_from_json(final_edges_path, parsed_features_path, stroke_dict_path)
+    graph.to_device(device)
 
 
 
-# build_graph_example()
+build_graph_example()
