@@ -17,14 +17,14 @@ import utils.face_aggregate
 import utils.plotting
 import build123.protocol
 
-def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4, epochs=50):
+def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=3e-4, epochs=50):
     model = models.gnn.gnn.InstanceModule()  # Assume InstanceModule is correctly imported and defined
     model.to(device)
 
-    # checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "gnn_model_Op", "gnn_model_Op" + ".ckpt")
-    # loaded_model = preprocessing.io_utils.load_model(model, checkpoint_path)
-    # if loaded_model is not None:
-    #     return loaded_model
+    checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "gnn_model_Op", "gnn_model_Op" + ".ckpt")
+    loaded_model = preprocessing.io_utils.load_model(model, checkpoint_path)
+    if loaded_model is not None:
+        return loaded_model
 
     
     total_size = len(dataset)
@@ -37,7 +37,7 @@ def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4
     validation_loader = DataLoader(validation_dataset, batch_size=batch_size, shuffle=False, collate_fn=preprocessing.collate_fn.stroke_cloud_collate)
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    criterion = nn.BCEWithLogitsLoss() 
+    criterion = nn.BCELoss() 
 
     for epoch in range(epochs):
         model.train()
@@ -70,12 +70,12 @@ def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=5e-4
 
         avg_val_loss = total_val_loss / len(validation_loader)
 
-        if avg_val_loss < 0.1:
+        if avg_val_loss < 0.05:
             break
 
         print(f"Epoch {epoch + 1}/{epochs} - Validation Loss: {avg_val_loss:.4f}")
 
-    preprocessing.io_utils.save_model(model, "gnn_model_Op")
+    # preprocessing.io_utils.save_model(model, "gnn_model_Op")
 
     return model
 
@@ -114,17 +114,20 @@ def run_gnn_param_prediction():
     with torch.no_grad():
         predictions = gnn_Predictor_model(x_dict, edge_index_dict)
     
-    print("predictions", predictions.shape)
 
     operation_of_interest = 2
+
     operation_interest_predictions = predictions[:, operation_of_interest]
 
     _ , top_strokes_indices = torch.topk(operation_interest_predictions, 10)
 
     gt_mat = example_graph['stroke'].z.to(device)
+
+
     gt_operation_interest = gt_mat[:, operation_of_interest]
     _ , gt_top_strokes_indices = torch.topk(gt_operation_interest, 10)
-    print("gt_top_strokes_indices", gt_top_strokes_indices)
+
+    utils.plotting.plot_3d_graph_strokes(example_graph, gt_operation_interest)
  
 
 
@@ -144,8 +147,8 @@ def run_gnn_param_prediction():
     
     build123.protocol.build_sketch(plane_points_list[0])
 
-    print("unique points for plane", utils.face_aggregate.find_unique_points(plane_points_list[0]))
-    print("ids", plane_stroke_ids[0])
+    # print("unique points for plane", utils.face_aggregate.find_unique_points(plane_points_list[0]))
+    # print("ids", plane_stroke_ids[0])
 
     return predictions
 
