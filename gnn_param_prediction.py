@@ -21,7 +21,7 @@ def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=3e-4
     model = models.gnn.gnn.InstanceModule()  # Assume InstanceModule is correctly imported and defined
     model.to(device)
 
-    checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "gnn_model_Op", "gnn_model_Op" + ".ckpt")
+    checkpoint_path = os.path.join(preprocessing.io_utils.home_dir, "output", "gnn_model_NoMLP", "gnn_model_NoMLP" + ".ckpt")
     loaded_model = preprocessing.io_utils.load_model(model, checkpoint_path)
     if loaded_model is not None:
         return loaded_model
@@ -70,12 +70,12 @@ def train_gnn_param_prediction(dataset, device, batch_size=1, learning_rate=3e-4
 
         avg_val_loss = total_val_loss / len(validation_loader)
 
-        if avg_val_loss < 0.05:
+        if avg_val_loss < 0.03:
             break
 
         print(f"Epoch {epoch + 1}/{epochs} - Validation Loss: {avg_val_loss:.4f}")
 
-    # preprocessing.io_utils.save_model(model, "gnn_model_Op")
+    preprocessing.io_utils.save_model(model, "gnn_model_NoMLP")
 
     return model
 
@@ -128,7 +128,7 @@ def run_gnn_param_prediction():
     _ , gt_top_strokes_indices = torch.topk(gt_operation_interest, 10)
 
     utils.plotting.plot_3d_graph_strokes(example_graph, gt_operation_interest)
- 
+    print("top_strokes_indices", top_strokes_indices)
 
 
     plane_points_list, plane_stroke_ids = utils.face_aggregate.find_planes_gnn(top_strokes_indices, example_graph)

@@ -19,17 +19,14 @@ class SemanticModule(nn.Module):
             models.gnn.basic.ResidualGeneralHeteroConvBlock(['temp_previous_add', 'intersects_mean'], hidden_channels, mlp_channels[0])
         ])
 
-        self.mlp = models.gnn.basic.MLPLinear(mlp_channels)
-
     def forward(self, x_dict, edge_index_dict):
 
         x_dict = self.local_head(x_dict, edge_index_dict)
 
         for layer in self.layers:
             x_dict = layer(x_dict, edge_index_dict)
-        x = self.mlp(x_dict['stroke'])
 
-        return x
+        return x_dict['stroke']
 
 
 class InstanceModule(nn.Module):
@@ -37,11 +34,9 @@ class InstanceModule(nn.Module):
         super(InstanceModule, self).__init__()
         num_classes = 9
         
-        in_features_decoder = mlp_channels[-1]
-
         self.encoder = SemanticModule(in_channels, hidden_channels, mlp_channels, num_classes)
         self.decoder = nn.Sequential(
-            nn.Linear(in_features_decoder, hidden_channels),  
+            nn.Linear(mlp_channels[0], hidden_channels),  
             nn.ReLU(inplace=True),
             nn.Linear(hidden_channels, num_classes)  
         )
