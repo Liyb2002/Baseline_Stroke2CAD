@@ -12,6 +12,9 @@ class Single_CAD_Simulation():
         self.count = 0
         self.keys = list(self.parsed_CAD_program['entities'].keys())
 
+        self.canvas = None
+        self.targetFace = None
+
     def CAD_process(self):
 
         entity_key = self.keys[self.count]
@@ -62,13 +65,12 @@ class Single_CAD_Simulation():
             
             #build the sketch
             point_list = [self.vertices[vertex_id].vector for pair in vertex_ids for vertex_id in pair]
-            entitiy = build123.protocol.build_sketch(point_list)
-            build123.protocol.build_extrude(entitiy)
+            self.targetFace = build123.protocol.build_sketch(point_list)
 
-            
 
     def process_extrude(self, data):
         print("extrude", data)
+        self.canvas = build123.protocol.build_extrude(self.canvas, self.targetFace)
 
 
 
@@ -78,12 +80,12 @@ def Process_CAD_example():
     simulation = Single_CAD_Simulation(CAD_path)
     simulation.CAD_process()
 
-    # print("-----")
-    # simulation.CAD_process()
-    # print("-----")
-    # simulation.CAD_process()
-    # print("-----")
-    # simulation.CAD_process()
+    print("-----")
+    simulation.CAD_process()
+    print("-----")
+    simulation.CAD_process()
+    print("-----")
+    simulation.CAD_process()
 
 
 Process_CAD_example()

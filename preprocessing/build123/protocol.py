@@ -28,7 +28,7 @@ def example_process():
 
 
 def build_sketch(Points_list):
-    brep_dir = os.path.join(home_dir,  "canvas", "brep")
+    brep_dir = os.path.join(home_dir,  "canvas", "brep.json")
     stl_dir = os.path.join(home_dir,  "canvas", "vis.stl")
 
     with BuildSketch():
@@ -53,10 +53,22 @@ def build_sketch(Points_list):
     return perimeter
 
 
-def build_extrude(entity):
-    brep_dir = os.path.join(home_dir,  "canvas", "brep")
+def build_extrude(canvas, target_face):
+    brep_dir = os.path.join(home_dir,  "canvas", "brep2")
     stl_dir = os.path.join(home_dir,  "canvas", "vis2.stl")
 
-    example = extrude( entity, amount=0.02)
+    new_element = extrude( target_face, amount=0.02)
+    new_element.label = "Extruded Part"
 
-    example.export_stl(stl_dir)
+
+    if canvas != None:
+        updated_canvas = Compound(label="Assembly", children=(canvas, new_element))
+
+    else:
+        updated_canvas = Compound(label="Assembly", children=[new_element])
+
+
+    updated_canvas.export_stl(stl_dir)
+    updated_canvas.export_brep(brep_dir)
+
+    return updated_canvas
