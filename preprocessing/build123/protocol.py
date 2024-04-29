@@ -45,6 +45,18 @@ def build_sketch(Points_list):
 
         perimeter = make_face()
 
+    print("done build skethch", brep_dir)
     perimeter.export_brep(brep_dir)
 
     perimeter.export_stl(stl_dir)
+
+    return perimeter
+
+
+def build_extrude(entity):
+    brep_dir = os.path.join(home_dir,  "canvas", "brep")
+    stl_dir = os.path.join(home_dir,  "canvas", "vis2.stl")
+
+    example = extrude( entity, amount=0.02)
+
+    example.export_stl(stl_dir)

@@ -37,3 +37,39 @@ def load_model(model, checkpoint_path):
         return model
     else:
         return None
+
+
+#---------------------------------------------------------------------#
+
+def transform_point_list(point_list):
+    transformed_list = []
+
+    for i in range(len(point_list) - 1):
+        transformed_list.append(point_list[i])
+        transformed_list.append(point_list[i+1])
+
+    transformed_list.append(point_list[-1])
+    transformed_list.append(point_list[0])
+
+    return transformed_list
+
+
+def ensure_sequential_vertex_order(vertex_pairs):
+    #ensure we have the format [[a,b], [b,c]...[x,a]]
+    if len(vertex_pairs) <= 1:
+        return vertex_pairs
+
+    ordered_pairs = [vertex_pairs[0]]
+
+    for i in range(1, len(vertex_pairs)):
+        current_pair = vertex_pairs[i]
+        previous_end = ordered_pairs[-1][1] 
+
+        if current_pair[0] != previous_end:
+            if current_pair[1] == previous_end:
+                current_pair = [current_pair[1], current_pair[0]]
+            else:
+                print(f"Warning: Pair {current_pair} does not connect sequentially with the previous pair.")
+        ordered_pairs.append(current_pair)
+
+    return ordered_pairs
