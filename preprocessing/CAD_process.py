@@ -69,8 +69,7 @@ class Single_CAD_Simulation():
 
 
     def process_extrude(self, data):
-        print("extrude", data)
-        self.canvas = build123.protocol.build_extrude(self.canvas, self.targetFace)
+        self.canvas = build123.protocol.build_extrude(self.canvas, self.targetFace, data['extent_one'])
 
 
 

@@ -53,11 +53,11 @@ def build_sketch(Points_list):
     return perimeter
 
 
-def build_extrude(canvas, target_face):
+def build_extrude(canvas, target_face, extrude_amount):
     brep_dir = os.path.join(home_dir,  "canvas", "brep2")
     stl_dir = os.path.join(home_dir,  "canvas", "vis2.stl")
 
-    new_element = extrude( target_face, amount=0.02)
+    new_element = extrude( target_face, amount=extrude_amount)
     new_element.label = "Extruded Part"
 
 
