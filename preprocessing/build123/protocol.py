@@ -61,8 +61,8 @@ def build_sketch(count, canvas, Points_list, origin, whole_sketch_rotation, per_
                 start_point = build123.helper.rotate_point_singleX(start_point, per_face_rotation)
                 end_point = build123.helper.rotate_point_singleX(end_point, per_face_rotation)
 
-                start_point = build123.helper.rotate_point(start_point, whole_sketch_rotation)
-                end_point = build123.helper.rotate_point(end_point, whole_sketch_rotation)
+                # start_point = build123.helper.rotate_point(start_point, whole_sketch_rotation)
+                # end_point = build123.helper.rotate_point(end_point, whole_sketch_rotation)
       
                 line = Line(start_point, end_point)
                 lines.append(line)

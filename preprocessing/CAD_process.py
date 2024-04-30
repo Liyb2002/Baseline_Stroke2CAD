@@ -16,6 +16,7 @@ class Single_CAD_Simulation():
 
         self.canvas = None
         self.targetFace = None
+        self.targetFace_normal = 1
 
     def CAD_process(self):
 
@@ -78,11 +79,12 @@ class Single_CAD_Simulation():
             print("self.vertices", point_list)
             print("normal", face.param['normal'])
             print("origin", face.param['origin'])
+            self.targetFace_normal = build123.helper.check_normal_direction(face.param['normal'])
             self.targetFace = build123.protocol.build_sketch(self.count,self.canvas, point_list, total_translation, whole_sketch_rotation, per_face_rotation)
 
 
     def process_extrude(self, data):
-        self.canvas = build123.protocol.build_extrude(self.count, self.canvas, self.targetFace, data['extent_one'])
+        self.canvas = build123.protocol.build_extrude(self.count, self.canvas, self.targetFace, data['extent_one'] * self.targetFace_normal)
 
 
 

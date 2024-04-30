@@ -91,3 +91,11 @@ def rotate_point_singleX(point, new_x_axis):
     rotated_point = np.dot(rotation_matrix, point_vector)
     
     return rotated_point
+
+def check_normal_direction(normal):
+    for component in normal:
+        if component > 0:
+            return 1
+        elif component < 0:
+            return -1
+    return 0
