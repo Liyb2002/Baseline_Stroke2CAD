@@ -1,6 +1,8 @@
 import io_utils
 import brep_class
 import build123.protocol
+import random
+import build123.helper
 
 class Single_CAD_Simulation():
     def __init__ (self, CAD_program_path):
@@ -20,7 +22,6 @@ class Single_CAD_Simulation():
         entity_key = self.keys[self.count]
         self.count += 1
 
-        print("entity_key", entity_key)
         entity_type = self.parsed_CAD_program['entities'][entity_key]['type']
 
         if entity_type == 'Sketch':
@@ -50,10 +51,16 @@ class Single_CAD_Simulation():
 
 
         #get the vertices for current face to build
+        whole_sketch_translation = data['transform']['origin']
+        whole_sketch_rotation_raw = data['transform']
+        whole_sketch_rotation = build123.helper.Compute_angle(whole_sketch_rotation_raw)
+
         for face in new_faces:
+            face_translation = face.param['origin']
+            per_face_rotation = face.param['x']
             vertex_ids = []
 
-            for edge_id in face.edges:
+            for edge_id in face.loops_edge_ids[0]:
                 edge = self.edges.get(edge_id)
                 if edge:
                     vertex_ids.append(edge.vertices)
@@ -63,13 +70,19 @@ class Single_CAD_Simulation():
 
             vertex_ids = io_utils.ensure_sequential_vertex_order(vertex_ids)
             
+            
             #build the sketch
+            total_translation = build123.helper.combine_translations(face_translation, whole_sketch_translation)
             point_list = [self.vertices[vertex_id].vector for pair in vertex_ids for vertex_id in pair]
-            self.targetFace = build123.protocol.build_sketch(point_list)
+
+            print("self.vertices", point_list)
+            print("normal", face.param['normal'])
+            print("origin", face.param['origin'])
+            self.targetFace = build123.protocol.build_sketch(self.count,self.canvas, point_list, total_translation, whole_sketch_rotation, per_face_rotation)
 
 
     def process_extrude(self, data):
-        self.canvas = build123.protocol.build_extrude(self.canvas, self.targetFace, data['extent_one'])
+        self.canvas = build123.protocol.build_extrude(self.count, self.canvas, self.targetFace, data['extent_one'])
 
 
 
