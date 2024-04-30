@@ -15,8 +15,8 @@ class Single_CAD_Simulation():
         self.keys = list(self.parsed_CAD_program['entities'].keys())
 
         self.canvas = None
-        self.targetFace = None
-        self.targetFace_normal = 1
+        self.targetFace = []
+        self.targetFace_normals = []
 
     def CAD_process(self):
 
@@ -33,6 +33,7 @@ class Single_CAD_Simulation():
 
 
     def process_sketch(self, data):
+        self.targetFace = []
         new_faces = brep_class.build_face(data['profiles']['faces'])
         new_edges = brep_class.build_edge(data['profiles']['edges'])
         new_vertices = brep_class.build_vertex(data['profiles']['vertices'])
@@ -76,16 +77,25 @@ class Single_CAD_Simulation():
             total_translation = build123.helper.combine_translations(face_translation, whole_sketch_translation)
             point_list = [self.vertices[vertex_id].vector for pair in vertex_ids for vertex_id in pair]
 
-            print("self.vertices", point_list)
-            print("normal", face.param['normal'])
-            print("origin", face.param['origin'])
-            self.targetFace_normal = build123.helper.check_normal_direction(face.param['normal'])
-            self.targetFace = build123.protocol.build_sketch(self.count,self.canvas, point_list, total_translation, whole_sketch_rotation, per_face_rotation)
+            self.targetFace_normals.append(build123.helper.check_normal_direction(face.param['normal']))
+            self.targetFace.append(build123.protocol.build_sketch(
+                        self.count,self.canvas, point_list, 
+                        total_translation, 
+                        whole_sketch_rotation, per_face_rotation))
+            
 
 
     def process_extrude(self, data):
-        self.canvas = build123.protocol.build_extrude(self.count, self.canvas, self.targetFace, data['extent_one'] * self.targetFace_normal)
 
+        count = 0
+        for target_face in self.targetFace:
+            if count == 0 and data['extent_one'] != 0:
+                self.canvas = build123.protocol.build_extrude(self.count, self.canvas, target_face, data['extent_one'] * self.targetFace_normals[count])
+            else:
+                if data['extent_two'] != 0:
+                    self.canvas = build123.protocol.build_extrude(self.count, self.canvas, target_face, data['extent_two'] * self.targetFace_normal)
+            count += 1
+            
 
 
 def Process_CAD_example():

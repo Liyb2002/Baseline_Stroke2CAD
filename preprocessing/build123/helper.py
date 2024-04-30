@@ -39,11 +39,12 @@ def combine_translations(face_translation, whole_sketch_translation):
     
     # Adding corresponding components
     combined_translation = [
-        face_translation[0] + x,
-        face_translation[1] + y,
-        face_translation[2] + z
+         x,
+         y,
+         z
     ]
     
+    # print("combined_translation", combined_translation)
     return combined_translation
 
 def rotate_point(point, rotation):
