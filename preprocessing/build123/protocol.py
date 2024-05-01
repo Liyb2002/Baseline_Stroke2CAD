@@ -48,16 +48,10 @@ def build_sketch(count, canvas, Points_list, origin, whole_sketch_rotation, per_
         perimeter = make_face()
 
     
-    if canvas != None:
-        updated_canvas = Compound(label="Assembly", children=(canvas, perimeter))
 
-    else:
-        updated_canvas = Compound(label="Assembly", children=[perimeter])
+    perimeter.export_brep(brep_dir)
 
-
-    updated_canvas.export_brep(brep_dir)
-
-    updated_canvas.export_stl(stl_dir)
+    perimeter.export_stl(stl_dir)
 
     return perimeter
 
@@ -68,18 +62,19 @@ def build_extrude(count, canvas, target_face, extrude_amount):
 
     
     if canvas != None:
-        print("canvas", type(canvas))
-        new_element = extrude( target_face, amount=-extrude_amount, mode=Mode.SUBTRACT)
-        new_element.label = "Extruded Part"
-        updated_canvas = Compound(label="Assembly", children=(canvas, new_element))
+        with canvas: 
+            print("new")
+            # new_canvas = canvas
+            extrude( target_face, amount=-extrude_amount, mode=Mode.SUBTRACT)
+        # new_element.label = "Extruded Part"
+        # updated_canvas = Compound(label="Assembly", children=(canvas, new_element))
 
     else:
-        new_element = extrude( target_face, amount=extrude_amount)
-        new_element.label = "Extruded Part"
-        updated_canvas = Compound(label="Assembly", children=[new_element])
+        with BuildPart() as canvas:
+            extrude( target_face, amount=extrude_amount)
 
 
-    updated_canvas.export_stl(stl_dir)
-    updated_canvas.export_brep(brep_dir)
+    canvas.part.export_stl(stl_dir)
+    canvas.part.export_brep(brep_dir)
 
-    return updated_canvas
+    return canvas
