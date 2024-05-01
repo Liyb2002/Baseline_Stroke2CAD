@@ -9,7 +9,7 @@ home_dir = Path(__file__).parent.parent
 
 
 def build_sketch(count, canvas, Points_list, origin, whole_sketch_rotation, per_face_rotation):
-    brep_dir = os.path.join(home_dir, "canvas", f"brep_{count}.json")
+    brep_dir = os.path.join(home_dir, "canvas", f"brep_{count}")
     stl_dir = os.path.join(home_dir, "canvas", f"vis_{count}.stl")
 
     with BuildSketch():
@@ -63,17 +63,19 @@ def build_sketch(count, canvas, Points_list, origin, whole_sketch_rotation, per_
 
 
 def build_extrude(count, canvas, target_face, extrude_amount):
-    brep_dir = os.path.join(home_dir, "canvas", f"brep_{count}.json")
+    brep_dir = os.path.join(home_dir, "canvas", f"brep_{count}")
     stl_dir = os.path.join(home_dir, "canvas", f"vis_{count}.stl")
 
-    new_element = extrude( target_face, amount=extrude_amount)
-    new_element.label = "Extruded Part"
-
-
+    
     if canvas != None:
+        print("canvas", type(canvas))
+        new_element = extrude( target_face, amount=-extrude_amount, mode=Mode.SUBTRACT)
+        new_element.label = "Extruded Part"
         updated_canvas = Compound(label="Assembly", children=(canvas, new_element))
 
     else:
+        new_element = extrude( target_face, amount=extrude_amount)
+        new_element.label = "Extruded Part"
         updated_canvas = Compound(label="Assembly", children=[new_element])
 
 
