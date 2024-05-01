@@ -90,7 +90,7 @@ class Single_CAD_Simulation():
         count = 0
         for target_face in self.targetFace:
             if count == 0 and data['extent_one'] != 0:
-                self.canvas = build123.protocol.build_extrude(self.count, self.canvas, target_face, data['extent_one'] * self.targetFace_normals[count])
+                self.canvas = build123.protocol.build_extrude(self.count, self.canvas, target_face, data['extent_one'] * self.targetFace_normals[count], data['extent_one'])
             else:
                 if data['extent_two'] != 0:
                     self.canvas = build123.protocol.build_extrude(self.count, self.canvas, target_face, data['extent_two'] * self.targetFace_normal)

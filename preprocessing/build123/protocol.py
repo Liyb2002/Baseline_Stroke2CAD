@@ -56,22 +56,24 @@ def build_sketch(count, canvas, Points_list, origin, whole_sketch_rotation, per_
     return perimeter
 
 
-def build_extrude(count, canvas, target_face, extrude_amount):
+def build_extrude(count, canvas, target_face, extrude_amount, is_Add):
     brep_dir = os.path.join(home_dir, "canvas", f"brep_{count}")
     stl_dir = os.path.join(home_dir, "canvas", f"vis_{count}.stl")
 
     
     if canvas != None:
         with canvas: 
-            print("new")
-            # new_canvas = canvas
-            extrude( target_face, amount=-extrude_amount, mode=Mode.SUBTRACT)
-        # new_element.label = "Extruded Part"
-        # updated_canvas = Compound(label="Assembly", children=(canvas, new_element))
+            if is_Add >= 0:
+                extrude( target_face, amount=extrude_amount)
+            else:
+                extrude( target_face, amount=extrude_amount, mode=Mode.SUBTRACT)
 
     else:
         with BuildPart() as canvas:
-            extrude( target_face, amount=extrude_amount)
+            if is_Add >= 0:
+                extrude( target_face, amount=extrude_amount)
+            else:
+                extrude( target_face, amount=extrude_amount, mode=Mode.SUBTRACT)
 
 
     canvas.part.export_stl(stl_dir)
