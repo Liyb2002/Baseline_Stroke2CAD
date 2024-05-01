@@ -30,23 +30,6 @@ def Compute_angle(values):
 
     return a_deg, b_deg, c_deg
 
-
-def combine_translations(face_translation, whole_sketch_translation):
-    # Extracting values from the dictionary using the keys 'x', 'y', 'z'
-    x = whole_sketch_translation['x']
-    y = whole_sketch_translation['y']
-    z = whole_sketch_translation['z']
-    
-    # Adding corresponding components
-    combined_translation = [
-         x,
-         y,
-         z
-    ]
-    
-    # print("combined_translation", combined_translation)
-    return combined_translation
-
 def rotate_point(point, rotation):
     x, y, z = point
     rx, ry, rz = map(radians, rotation)  # Convert rotation angles from degrees to radians
@@ -100,3 +83,16 @@ def check_normal_direction(normal):
         elif component < 0:
             return -1
     return 0
+
+
+def translate_local(point, local_translation):
+    point = (point[0] + local_translation[0], 
+                point[1] + local_translation[1], 
+                point[2] + local_translation[2])
+    return point
+
+def translate_global(point, global_translation):
+    point = (point[0] + global_translation['x'], 
+                point[1] + global_translation['y'], 
+                point[2] + global_translation['z'])
+    return point

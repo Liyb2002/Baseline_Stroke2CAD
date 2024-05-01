@@ -74,13 +74,12 @@ class Single_CAD_Simulation():
             
             
             #build the sketch
-            total_translation = build123.helper.combine_translations(face_translation, whole_sketch_translation)
             point_list = [self.vertices[vertex_id].vector for pair in vertex_ids for vertex_id in pair]
 
             self.targetFace_normals.append(build123.helper.check_normal_direction(face.param['normal']))
             self.targetFace.append(build123.protocol.build_sketch(
                         self.count,self.canvas, point_list, 
-                        total_translation, 
+                        face_translation, whole_sketch_translation, 
                         whole_sketch_rotation, per_face_rotation))
             
 
