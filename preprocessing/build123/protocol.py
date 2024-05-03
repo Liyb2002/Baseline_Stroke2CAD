@@ -61,17 +61,17 @@ def build_extrude(count, canvas, target_face, extrude_amount, is_Add):
             if is_Add >= 0:
                 extrude( target_face, amount=extrude_amount)
             else:
-                extrude( target_face, amount=extrude_amount)
+                # extrude( target_face, amount=extrude_amount)
 
-                # extrude( target_face, amount=-extrude_amount, mode=Mode.SUBTRACT)
+                extrude( target_face, amount=-extrude_amount, mode=Mode.SUBTRACT)
 
     else:
         with BuildPart() as canvas:
             if is_Add >= 0:
                 extrude( target_face, amount=extrude_amount)
             else:
-                extrude( target_face, amount=extrude_amount)
-                # extrude( target_face, amount=-extrude_amount, mode=Mode.SUBTRACT)
+                # extrude( target_face, amount=extrude_amount)
+                extrude( target_face, amount=-extrude_amount, mode=Mode.SUBTRACT)
 
 
     canvas.part.export_stl(stl_dir)
