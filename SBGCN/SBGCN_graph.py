@@ -53,3 +53,13 @@ class HeteroGraph:
             if data["type"] == node_type and data["features"] == features:
                 return node_id
         return None
+
+    def print_features_for_node_type(self, node_type):
+        node_id = 0  # Node ID to print features for
+        for node_id, data in self.nodes.items():
+            if data["type"] == node_type:
+                print(f"Features for node {node_id} of type '{node_type}':")
+                print(data["features"])
+                break
+        else:
+            print(f"No node with ID 0 found for type '{node_type}'")

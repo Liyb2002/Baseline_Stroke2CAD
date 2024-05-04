@@ -7,6 +7,10 @@ from OCC.Core.BRep import BRep_Tool
 from OCC.Core.GProp import GProp_GProps
 from OCC.Core.BRepGProp import brepgprop
 
+from torch.utils.data import Dataset
+
+import os
+from tqdm import tqdm
 import SBGCN_graph
 
 def read_step_file(filename):
@@ -28,7 +32,11 @@ def create_edge_node(edge):
     properties = GProp_GProps()
     brepgprop.LinearProperties(edge, properties)
     length = properties.Mass()
-    return {"length": length}
+    
+    edge_start = BRep_Tool.Pnt(topods.Vertex(TopExp_Explorer(edge, TopAbs_VERTEX).Current()))
+    edge_end = BRep_Tool.Pnt(topods.Vertex(TopExp_Explorer(edge, TopAbs_VERTEX, True).Current()))
+    
+    return {"length": length, "start_point": (edge_start.X(), edge_start.Y(), edge_start.Z()), "end_point": (edge_end.X(), edge_end.Y(), edge_end.Z())}
 
 def create_vertex_node(vertex):
     pt = BRep_Tool.Pnt(vertex)
@@ -84,3 +92,29 @@ def create_graph_from_step_file(step_path):
     return graph
 
 
+
+class BRep_Dataset(Dataset):
+    def __init__(self, data_path, num_graphs = 32):
+        self.data_path = data_path
+        self.graphs = []
+
+        graph = create_graph_from_step_file(self.data_path)
+
+        node_counts = graph.count_nodes_by_type()
+        for node_type, count in node_counts.items():
+            print(f"Number of {node_type} nodes: {count}")
+            graph.print_features_for_node_type(node_type)
+
+        
+        for i in range(num_graphs):
+            self.graphs.append(graph)
+
+
+    def __len__(self):
+        return len(self.CAD_stroke_pairs)
+
+    def __getitem__(self, idx):
+        graph = self.graphs[idx]
+
+        return graph
+    
