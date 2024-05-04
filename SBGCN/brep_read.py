@@ -43,25 +43,39 @@ def create_graph_from_step_file(step_path):
     face_explorer = TopExp_Explorer(shape, TopAbs_FACE)
     while face_explorer.More():
         face = topods.Face(face_explorer.Current())
-        face_id = len(graph.nodes)  # Generate a unique ID for the face node
-        graph.add_node(face_id, "face", features=create_face_node(face))
+        face_features=create_face_node(face)
+        face_node_id = graph.avoid_duplicate("face", face_features)
+
+        if face_node_id is None:
+            face_id = len(graph.nodes)
+            graph.add_node(face_id, "face", features=face_features)
         
+
         # Explore edges of the face
         edge_explorer = TopExp_Explorer(face, TopAbs_EDGE)
         while edge_explorer.More():
             edge = topods.Edge(edge_explorer.Current())
-            edge_id = len(graph.nodes)  # Generate a unique ID for the edge node
-            graph.add_node(edge_id, "edge", features=create_edge_node(edge))
-            graph.add_edge(face_id, edge_id, "has_edge")
+            edge_features=create_edge_node(edge)
+            edge_node_id = graph.avoid_duplicate("edge", edge_features)
+
+            if edge_node_id is None:
+                edge_id = len(graph.nodes) 
+                graph.add_node(edge_id, "edge", features=create_edge_node(edge))
+                graph.add_edge(face_id, edge_id, "has_edge")
             
             # Explore vertices of the edge
-            vertex_explorer = TopExp_Explorer(edge, TopAbs_VERTEX)
-            while vertex_explorer.More():
-                vertex = topods.Vertex(vertex_explorer.Current())
-                vertex_id = len(graph.nodes)  # Generate a unique ID for the vertex node
-                graph.add_node(vertex_id, "vertex", features=create_vertex_node(vertex))
-                graph.add_edge(edge_id, vertex_id, "has_vertex")
-                vertex_explorer.Next()
+                vertex_explorer = TopExp_Explorer(edge, TopAbs_VERTEX)
+                while vertex_explorer.More():
+                    vertex = topods.Vertex(vertex_explorer.Current())
+                    vertex_features=create_edge_node(edge)
+                    vertex_node_id = graph.avoid_duplicate("vertex", vertex_features)
+
+                    if vertex_node_id is None:
+                        vertex_id = len(graph.nodes)
+                        graph.add_node(vertex_id, "vertex", features=create_vertex_node(vertex))
+                        graph.add_edge(edge_id, vertex_id, "has_vertex")
+                    
+                    vertex_explorer.Next()
             
             edge_explorer.Next()
         

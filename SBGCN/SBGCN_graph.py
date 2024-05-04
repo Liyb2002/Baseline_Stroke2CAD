@@ -48,3 +48,8 @@ class HeteroGraph:
                 node_counts[node_type] = 1
         return node_counts
 
+    def avoid_duplicate(self, node_type, features):
+        for node_id, data in self.nodes.items():
+            if data["type"] == node_type and data["features"] == features:
+                return node_id
+        return None
