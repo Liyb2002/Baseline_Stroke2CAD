@@ -8,6 +8,7 @@ from OCC.Core.GProp import GProp_GProps
 from OCC.Core.BRepGProp import brepgprop
 
 from torch.utils.data import Dataset
+from itertools import combinations
 
 import torch
 import os
@@ -27,7 +28,7 @@ def read_step_file(filename):
 
 def create_face_node(face):
     u_min, u_max, v_min, v_max = breptools.UVBounds(face)
-    return {"uv_bounds": (u_min, u_max, v_min, v_max)}
+    return[u_min, u_max, v_min, v_max]
 
 def create_edge_node(edge):
     properties = GProp_GProps()
@@ -37,11 +38,11 @@ def create_edge_node(edge):
     edge_start = BRep_Tool.Pnt(topods.Vertex(TopExp_Explorer(edge, TopAbs_VERTEX).Current()))
     edge_end = BRep_Tool.Pnt(topods.Vertex(TopExp_Explorer(edge, TopAbs_VERTEX, True).Current()))
     
-    return { "start_point": (edge_start.X(), edge_start.Y(), edge_start.Z()), "end_point": (edge_end.X(), edge_end.Y(), edge_end.Z())}
+    return [edge_start.X(), edge_start.Y(), edge_start.Z(), edge_end.X(), edge_end.Y(), edge_end.Z()]
 
 def create_vertex_node(vertex):
     pt = BRep_Tool.Pnt(vertex)
-    return {"coordinates": (pt.X(), pt.Y(), pt.Z())}
+    return [pt.X(), pt.Y(), pt.Z()]
 
 
 def check_duplicate(new_feature, feature_list, face = 0):
@@ -50,6 +51,23 @@ def check_duplicate(new_feature, feature_list, face = 0):
             return idx
     
     return -1
+
+def build_face_to_face(edge_index_face_edge_list):
+    edge_to_faces = {}
+    for face_id, edge_id in edge_index_face_edge_list:
+        if edge_id not in edge_to_faces:
+            edge_to_faces[edge_id] = set()
+        edge_to_faces[edge_id].add(face_id)
+    
+    shared_face_pairs = []
+    for edge_id, face_ids in edge_to_faces.items():
+        if len(face_ids) > 1:
+            face_pairs = combinations(face_ids, 2)
+            for face_pair in face_pairs:
+                shared_face_pairs.append(sorted(face_pair))
+    
+    shared_face_pairs = [list(pair) for pair in set(tuple(pair) for pair in shared_face_pairs)]
+    return shared_face_pairs
 
 def create_graph_from_step_file(step_path):
     shape = read_step_file(step_path)
@@ -60,6 +78,7 @@ def create_graph_from_step_file(step_path):
     
     edge_index_face_edge_list = []
     edge_index_edge_vertex_list = []
+    edge_index_face_to_face_list = []
 
     index_counter = 0
     index_to_type = {}
@@ -123,8 +142,9 @@ def create_graph_from_step_file(step_path):
         
         face_explorer.Next()
 
+    edge_index_face_face_list = build_face_to_face(edge_index_face_edge_list)
     graph_data = SBGCN_graph.GraphHeteroData(face_features_list, edge_features_list, vertex_features_list,
-                                  edge_index_face_edge_list, edge_index_edge_vertex_list)
+                                  edge_index_face_edge_list, edge_index_edge_vertex_list, edge_index_face_face_list)
     
     return graph_data
 

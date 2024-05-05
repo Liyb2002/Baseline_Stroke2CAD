@@ -23,6 +23,7 @@ def train_graph_embedding(dataset, num_epochs=1, batch_size=1, learning_rate=0.0
     
     # Define loss function and optimizer
     criterion = nn.CrossEntropyLoss()
+    model = SBGCN_network.FaceEdgeVertexGCN()
     
     # Create DataLoader for batching
     dataloader = DataLoader(dataset, batch_size=batch_size, 
@@ -43,9 +44,7 @@ def train_graph_embedding(dataset, num_epochs=1, batch_size=1, learning_rate=0.0
             print("-0--------get---------graph")
 
             # Forward pass
-            x_t, x_p, x_f, x_e, x_v = model(graph)
-            print("x_t", x_t.shape)
-            print("x_p", x_p.shape)
+            x_f, x_e, x_v = model(graph)
             print("x_f", x_f.shape)
             print("x_e", x_e.shape)
             print("x_v", x_v.shape)
@@ -63,7 +62,7 @@ def run():
 
 
     step_path =  ['../preprocessing/canvas/step_4.step']
-    for i in range(100):
+    for i in range(1):
         step_path.append('../preprocessing/canvas/step_4.step')
 
     dataset = brep_read.BRep_Dataset(step_path)

@@ -3,19 +3,24 @@ from torch_geometric.data import Data, HeteroData
 
 
 class GraphHeteroData(HeteroData):
-    def __init__(self, face_features, edge_features, vertex_features, edge_index_face_edge, edge_index_edge_vertex):
+    def __init__(self, face_features, edge_features, vertex_features, 
+                 edge_index_face_edge, edge_index_edge_vertex, edge_index_face_face_list):
         super(GraphHeteroData, self).__init__()
 
-        self['face'].x = face_features
-        self['edge'].x = edge_features
-        self['vertex'].x = vertex_features
+
+        self['face'].x = self.preprocess_features(face_features)
+        self['edge'].x = self.preprocess_features(edge_features)
+        self['vertex'].x = self.preprocess_features(vertex_features)
 
         self['face'].num_nodes = len(face_features)
         self['edge'].num_nodes = len(edge_features)
         self['vertex'].num_nodes = len(vertex_features)
 
-        self['face', 'connected', 'edge'].edge_index = edge_index_face_edge
+        self['face', 'connects', 'edge'].edge_index = edge_index_face_edge
         self['edge', 'connects', 'vertex'].edge_index = edge_index_edge_vertex
+        self['edge', 'connects', 'face'].edge_index = self.reverse_edge(edge_index_face_edge)
+        self['vertex', 'connects', 'edge'].edge_index = self.reverse_edge(edge_index_edge_vertex)
+        self['face', 'connects', 'face'].edge_index = edge_index_face_face_list
 
     def to_device(self, device):
         for key, value in self.items():
@@ -30,4 +35,17 @@ class GraphHeteroData(HeteroData):
         print("Number of faces:", num_faces)
         print("Number of edges:", num_edges)
         print("Number of vertices:", num_vertices)
+
+    def preprocess_features(self, features):
+        processed_features = [] 
+        for _, f in features:
+            processed_features.append(f)
+        
+        return torch.tensor(processed_features)
+
+    def reverse_edge(self, edge_list):
+        reversed_lst = []
+        for sublist in edge_list:
+            reversed_lst.append([sublist[1], sublist[0]])
+        return reversed_lst
 
