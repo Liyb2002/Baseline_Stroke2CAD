@@ -18,7 +18,7 @@ def graph_collate(batch):
     return 0
 
 
-def train_graph_embedding(dataset, num_epochs=1, batch_size=1, learning_rate=0.001):
+def train_graph_embedding(dataset, num_epochs=10, batch_size=1, learning_rate=0.001):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # Define loss function and optimizer
@@ -49,7 +49,8 @@ def train_graph_embedding(dataset, num_epochs=1, batch_size=1, learning_rate=0.0
             print("x_e", x_e.shape)
             print("x_v", x_v.shape)
 
-        
+    
+    return model
 
 
 
@@ -68,7 +69,9 @@ def run():
     dataset = brep_read.BRep_Dataset(step_path)
 
 
-    train_graph_embedding(dataset)
+    model = train_graph_embedding(dataset)
+
+    print("done")
 
 
 run()
