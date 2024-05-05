@@ -9,6 +9,7 @@ from OCC.Core.BRepGProp import brepgprop
 
 from torch.utils.data import Dataset
 
+import torch
 import os
 from tqdm import tqdm
 import SBGCN_graph
@@ -36,62 +37,99 @@ def create_edge_node(edge):
     edge_start = BRep_Tool.Pnt(topods.Vertex(TopExp_Explorer(edge, TopAbs_VERTEX).Current()))
     edge_end = BRep_Tool.Pnt(topods.Vertex(TopExp_Explorer(edge, TopAbs_VERTEX, True).Current()))
     
-    return {"length": length, "start_point": (edge_start.X(), edge_start.Y(), edge_start.Z()), "end_point": (edge_end.X(), edge_end.Y(), edge_end.Z())}
+    return { "start_point": (edge_start.X(), edge_start.Y(), edge_start.Z()), "end_point": (edge_end.X(), edge_end.Y(), edge_end.Z())}
 
 def create_vertex_node(vertex):
     pt = BRep_Tool.Pnt(vertex)
     return {"coordinates": (pt.X(), pt.Y(), pt.Z())}
 
+
+def check_duplicate(new_feature, feature_list, face = 0):
+    for idx, existing_feature in feature_list:
+        if existing_feature == new_feature:
+            return idx
+    
+    return -1
+
 def create_graph_from_step_file(step_path):
     shape = read_step_file(step_path)
 
-    graph = SBGCN_graph.HeteroGraph()
+    face_features_list = []
+    edge_features_list = []
+    vertex_features_list = []
+    
+    edge_index_face_edge_list = []
+    edge_index_edge_vertex_list = []
 
-    face_explorer = TopExp_Explorer(shape, TopAbs_FACE)
+    index_counter = 0
+    index_to_type = {}
+
     face_explorer = TopExp_Explorer(shape, TopAbs_FACE)
     while face_explorer.More():
         face = topods.Face(face_explorer.Current())
-        face_features=create_face_node(face)
-        face_node_id = graph.avoid_duplicate("face", face_features)
+        face_features = create_face_node(face)
 
-        if face_node_id is None:
-            face_id = len(graph.nodes)
-            graph.add_node(face_id, "face", features=face_features)
-        
+        if check_duplicate(face_features, face_features_list, 1) != -1:
+            face_explorer.Next()
+            continue
+
+        face_features_list.append((index_counter, face_features))
+        current_face_counter = index_counter
+        index_to_type[current_face_counter] = 'face'
+        index_counter += 1
+
 
         # Explore edges of the face
         edge_explorer = TopExp_Explorer(face, TopAbs_EDGE)
         while edge_explorer.More():
             edge = topods.Edge(edge_explorer.Current())
-            edge_features=create_edge_node(edge)
-            edge_node_id = graph.avoid_duplicate("edge", edge_features)
+            edge_features = create_edge_node(edge)
 
-            if edge_node_id is None:
-                edge_id = len(graph.nodes) 
-                graph.add_node(edge_id, "edge", features=create_edge_node(edge))
-                graph.add_edge(face_id, edge_id, "has_edge")
+            edge_duplicate_id = check_duplicate(edge_features, edge_features_list)
+            if edge_duplicate_id != -1:
+                edge_index_face_edge_list.append([current_face_counter, edge_duplicate_id])
+                edge_explorer.Next()
+                continue
             
-            # Explore vertices of the edge
-                vertex_explorer = TopExp_Explorer(edge, TopAbs_VERTEX)
-                while vertex_explorer.More():
-                    vertex = topods.Vertex(vertex_explorer.Current())
-                    vertex_features=create_edge_node(edge)
-                    vertex_node_id = graph.avoid_duplicate("vertex", vertex_features)
+            edge_features_list.append((index_counter, edge_features))
+            current_edge_counter = index_counter
+            edge_index_face_edge_list.append([current_face_counter, current_edge_counter])
+            index_to_type[current_edge_counter] = 'edge'
+            index_counter += 1
 
-                    if vertex_node_id is None:
-                        vertex_id = len(graph.nodes)
-                        graph.add_node(vertex_id, "vertex", features=create_vertex_node(vertex))
-                        graph.add_edge(edge_id, vertex_id, "has_vertex")
-                    
+
+            # Explore vertices of the edge
+            vertex_explorer = TopExp_Explorer(edge, TopAbs_VERTEX)
+            while vertex_explorer.More():
+                vertex = topods.Vertex(vertex_explorer.Current())
+                vertex_features = create_vertex_node(vertex)
+
+
+                vertex_duplicate_id = check_duplicate(vertex_features, vertex_features_list)
+                if vertex_duplicate_id != -1:
+                    edge_index_edge_vertex_list.append([current_edge_counter, vertex_duplicate_id])
                     vertex_explorer.Next()
+                    continue
+                
+                vertex_features_list.append((index_counter, vertex_features))
+                edge_index_edge_vertex_list.append([current_edge_counter, index_counter])
+                index_to_type[index_counter] = 'vertex'
+                index_counter += 1
+                
+                vertex_explorer.Next()
             
             edge_explorer.Next()
         
+        
         face_explorer.Next()
+
+    graph_data = SBGCN_graph.GraphHeteroData(face_features_list, edge_features_list, vertex_features_list,
+                                  edge_index_face_edge_list, edge_index_edge_vertex_list)
     
-    return graph
+    return graph_data
 
 
+create_graph_from_step_file( '../preprocessing/canvas/step_4.step')
 
 class BRep_Dataset(Dataset):
     def __init__(self, data_path, num_graphs = 32):
@@ -100,18 +138,14 @@ class BRep_Dataset(Dataset):
 
         graph = create_graph_from_step_file(self.data_path)
 
-        node_counts = graph.count_nodes_by_type()
-        for node_type, count in node_counts.items():
-            print(f"Number of {node_type} nodes: {count}")
-            graph.print_features_for_node_type(node_type)
+        graph.count_nodes()
 
-        
         for i in range(num_graphs):
             self.graphs.append(graph)
 
 
     def __len__(self):
-        return len(self.CAD_stroke_pairs)
+        return len(self.graphs)
 
     def __getitem__(self, idx):
         graph = self.graphs[idx]

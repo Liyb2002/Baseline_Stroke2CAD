@@ -1,65 +1,30 @@
-class HeteroGraph:
-    def __init__(self):
-        self.nodes = {}
-        self.edges = {}
+import torch
+from torch_geometric.data import Data, HeteroData
 
-    def add_node(self, node_id, node_type, features=None):
-        if node_id not in self.nodes:
-            self.nodes[node_id] = {"type": node_type, "features": features}
 
-    def add_edge(self, src_node_id, dst_node_id, edge_type, features=None):
-        if (src_node_id, dst_node_id) not in self.edges:
-            self.edges[(src_node_id, dst_node_id)] = {"type": edge_type, "features": features}
+class GraphHeteroData(HeteroData):
+    def __init__(self, face_features, edge_features, vertex_features, edge_index_face_edge, edge_index_edge_vertex):
+        super(GraphHeteroData, self).__init__()
 
-    def get_node(self, node_id):
-        return self.nodes.get(node_id)
+        self['face'].x = face_features
+        self['edge'].x = edge_features
+        self['vertex'].x = vertex_features
 
-    def get_edge(self, src_node_id, dst_node_id):
-        return self.edges.get((src_node_id, dst_node_id))
+        self['face', 'connected', 'edge'].edge_index = edge_index_face_edge
+        self['edge', 'connects', 'vertex'].edge_index = edge_index_edge_vertex
 
-    def get_neighbors(self, node_id):
-        neighbors = []
-        for src, dst in self.edges:
-            if src == node_id:
-                neighbors.append(dst)
-        return neighbors
+    def to_device(self, device):
+        for key, value in self.items():
+            if torch.is_tensor(value):
+                self[key] = value.to(device)
 
-    def get_node_ids_by_type(self, node_type):
-        node_ids = []
-        for node_id, data in self.nodes.items():
-            if data["type"] == node_type:
-                node_ids.append(node_id)
-        return node_ids
+    def count_nodes(self):
+        num_faces = len(self['face'].x)
+        num_edges = len(self['edge'].x)
+        num_vertices = len(self['vertex'].x)
+        
+        print("Number of faces:", num_faces)
+        print("Number of edges:", num_edges)
+        print("Number of vertices:", num_vertices)
 
-    def get_edge_ids_by_type(self, edge_type):
-        edge_ids = []
-        for edge_id, data in self.edges.items():
-            if data["type"] == edge_type:
-                edge_ids.append(edge_id)
-        return edge_ids
-
-    def count_nodes_by_type(self):
-        node_counts = {}
-        for node_id, data in self.nodes.items():
-            node_type = data["type"]
-            if node_type in node_counts:
-                node_counts[node_type] += 1
-            else:
-                node_counts[node_type] = 1
-        return node_counts
-
-    def avoid_duplicate(self, node_type, features):
-        for node_id, data in self.nodes.items():
-            if data["type"] == node_type and data["features"] == features:
-                return node_id
-        return None
-
-    def print_features_for_node_type(self, node_type):
-        node_id = 0  # Node ID to print features for
-        for node_id, data in self.nodes.items():
-            if data["type"] == node_type:
-                print(f"Features for node {node_id} of type '{node_type}':")
-                print(data["features"])
-                break
-        else:
-            print(f"No node with ID 0 found for type '{node_type}'")
+    

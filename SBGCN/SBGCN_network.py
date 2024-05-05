@@ -2,15 +2,15 @@ import torch
 import torch_scatter
 from torch.nn import Linear, Sequential, ModuleList, BatchNorm1d, Dropout, LeakyReLU, ReLU
 import torch_geometric as tg
-from .uvnet_encoders import UVNetCurveEncoder, UVNetSurfaceEncoder
+from uvnet_encoders import UVNetCurveEncoder, UVNetSurfaceEncoder
 
 class FaceEdgeVertexGCN(torch.nn.Module):
     def __init__(self,
-                 f_in_width,
-                 e_in_width,
-                 v_in_width,
-                 out_width,
-                 k,
+                 f_in_width = 4,
+                 e_in_width = 6,
+                 v_in_width = 3,
+                 out_width = 32,
+                 k = 4,
                  use_uvnet_features=False,
                  srf_in_dim=[0, 1, 2, 3, 4, 5, 8],
                  srf_emb_dim=64):
