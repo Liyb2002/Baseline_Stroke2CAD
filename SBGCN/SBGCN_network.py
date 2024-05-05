@@ -37,8 +37,10 @@ class FaceEdgeVertexGCN(torch.nn.Module):
 
         # Additional message passing layers
         self.ffLayers = ModuleList()
-        for i in range(k):
+        for i in range(1):
             self.ffLayers.append(BipartiteResMRConv(out_width))
+        
+        self.F2F = BipartiteResMRConv(out_width)
 
         # BipartiteResMRConv layers for message passing between edge-face and vertex-edge
         self.E2F = BipartiteResMRConv(out_width)
@@ -48,12 +50,7 @@ class FaceEdgeVertexGCN(torch.nn.Module):
         x_f = data['face'].x
         x_e = data['edge'].x
         x_v = data['vertex'].x
-
-        # Compute uvnet features if enabled
-        if self.use_uvnet_features:
-            hidden_srf_feat = self.surf_encoder(data['face_samples'][:, self.srf_in_dim, :, :])
-            x_f = torch.cat((x_f, hidden_srf_feat), dim=1)
-            x_e = torch.cat((x_e, hidden_srf_feat), dim=1)
+        index_id = data['face'].y
 
         # Apply input encoders
         x_f = self.embed_f_in(x_f)
@@ -61,17 +58,17 @@ class FaceEdgeVertexGCN(torch.nn.Module):
         x_v = self.embed_v_in(x_v)
 
         # Upward pass (Face to Edge and Edge to Vertex)
-        x_e = self.F2E(x_f, x_e, torch.tensor(data['face', 'connects', 'edge'].edge_index, dtype=torch.long))
-        x_v = self.E2V(x_e, x_v, torch.tensor(data['edge', 'connects', 'vertex'].edge_index, dtype=torch.long))
+        x_e = self.F2E(x_f, x_e, torch.tensor(data['face', 'connects', 'edge'].edge_index, dtype=torch.long), index_id)
+        x_v = self.E2V(x_e, x_v, torch.tensor(data['edge', 'connects', 'vertex'].edge_index, dtype=torch.long), index_id)
 
         # Meta-Edge Spine
         # for conv in self.ffLayers:
-        # x_f = conv(x_f, x_f, torch.tensor(data['face', 'connects', 'face'].edge_index, dtype=torch.long))
-        # x_f = self.E2V(x_f, x_f, torch.tensor(data['face', 'connects', 'face'].edge_index, dtype=torch.long))
+        #     x_f = conv(x_f, x_f, torch.tensor(data['face', 'connects', 'face'].edge_index, dtype=torch.long))
+        # x_f = self.F2F(x_f, x_f, torch.tensor(data['face', 'connects', 'face'].edge_index, dtype=torch.long))
 
         # Downward pass (Edge to Face and Vertex to Edge)
-        x_f = self.F2E(x_e, x_f, torch.tensor(data['edge', 'connects', 'face'].edge_index, dtype=torch.long))
-        x_e = self.F2E(x_v, x_e, torch.tensor(data['vertex', 'connects', 'edge'].edge_index, dtype=torch.long))
+        x_f = self.F2E(x_e, x_f, torch.tensor(data['edge', 'connects', 'face'].edge_index, dtype=torch.long), index_id)
+        x_e = self.F2E(x_v, x_e, torch.tensor(data['vertex', 'connects', 'edge'].edge_index, dtype=torch.long), index_id)
 
         return x_f, x_e, x_v
 
@@ -81,14 +78,24 @@ class BipartiteResMRConv(torch.nn.Module):
         super().__init__()
         self.mlp = LinearBlock(2*width, width)
     
-    def forward(self, x_src, x_dst, e):
-        diffs = torch.index_select(x_dst, 0, e[1]) - torch.index_select(x_src, 0, e[0])
-        maxes, _ = torch_scatter.scatter_max(
-            diffs, 
-            e[1], 
-            dim=0, 
-            dim_size=x_dst.shape[0]
-        )
+    def forward(self, x_src, x_dst, e, index_id):
+        
+        maxes = torch.zeros_like(x_dst)  
+        for edge_tuple in e:
+            src_idx = torch.tensor(index_id[edge_tuple[0]])
+            dst_idx = torch.tensor(index_id[edge_tuple[1]])
+
+            diffs = torch.index_select(x_dst, 0, dst_idx) - torch.index_select(x_src, 0, src_idx)
+
+            max_val, _ = torch_scatter.scatter_max(
+                diffs, 
+                edge_tuple[1], 
+                dim=0, 
+                dim_size=x_dst.shape[0]
+            )
+
+            maxes += max_val
+
         return x_dst + self.mlp(torch.cat([x_dst, maxes], dim=1))
 
 

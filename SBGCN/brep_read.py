@@ -69,6 +69,19 @@ def build_face_to_face(edge_index_face_edge_list):
     shared_face_pairs = [list(pair) for pair in set(tuple(pair) for pair in shared_face_pairs)]
     return shared_face_pairs
 
+def count_type(index_to_type_dict):
+    counts = {'face': 0, 'edge': 0, 'vertex': 0}
+    result = []
+    for value in index_to_type_dict.values():
+        counts[value] += 1
+        if value == 'face':
+            result.append(counts['face'] - 1)
+        elif value == 'edge':
+            result.append(counts['edge'] - 1)
+        elif value == 'vertex':
+            result.append(counts['vertex'] - 1)
+    return result
+
 def create_graph_from_step_file(step_path):
     shape = read_step_file(step_path)
 
@@ -78,7 +91,6 @@ def create_graph_from_step_file(step_path):
     
     edge_index_face_edge_list = []
     edge_index_edge_vertex_list = []
-    edge_index_face_to_face_list = []
 
     index_counter = 0
     index_to_type = {}
@@ -142,9 +154,11 @@ def create_graph_from_step_file(step_path):
         
         face_explorer.Next()
 
+    index_id = count_type(index_to_type)
     edge_index_face_face_list = build_face_to_face(edge_index_face_edge_list)
     graph_data = SBGCN_graph.GraphHeteroData(face_features_list, edge_features_list, vertex_features_list,
-                                  edge_index_face_edge_list, edge_index_edge_vertex_list, edge_index_face_face_list)
+                                  edge_index_face_edge_list, edge_index_edge_vertex_list, edge_index_face_face_list,
+                                  index_id)
     
     return graph_data
 

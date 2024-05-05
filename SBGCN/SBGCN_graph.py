@@ -4,13 +4,15 @@ from torch_geometric.data import Data, HeteroData
 
 class GraphHeteroData(HeteroData):
     def __init__(self, face_features, edge_features, vertex_features, 
-                 edge_index_face_edge, edge_index_edge_vertex, edge_index_face_face_list):
+                 edge_index_face_edge, edge_index_edge_vertex, edge_index_face_face_list,
+                 index_id):
         super(GraphHeteroData, self).__init__()
 
 
         self['face'].x = self.preprocess_features(face_features)
         self['edge'].x = self.preprocess_features(edge_features)
         self['vertex'].x = self.preprocess_features(vertex_features)
+        self['face'].y = index_id
 
         self['face'].num_nodes = len(face_features)
         self['edge'].num_nodes = len(edge_features)
