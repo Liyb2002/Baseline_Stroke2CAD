@@ -129,26 +129,14 @@ def create_graph_from_step_file(step_path):
     return graph_data
 
 
-create_graph_from_step_file( '../preprocessing/canvas/step_4.step')
-
 class BRep_Dataset(Dataset):
-    def __init__(self, data_path, num_graphs = 32):
-        self.data_path = data_path
-        self.graphs = []
-
-        graph = create_graph_from_step_file(self.data_path)
-
-        graph.count_nodes()
-
-        for i in range(num_graphs):
-            self.graphs.append(graph)
-
-
-    def __len__(self):
-        return len(self.graphs)
-
-    def __getitem__(self, idx):
-        graph = self.graphs[idx]
-
-        return graph
+    def __init__(self, data_paths):
+        self.data_paths = data_paths
     
+    def __len__(self):
+        return len(self.data_paths)
+    
+    def __getitem__(self, idx):
+        step_path = self.data_paths[idx]
+
+        return step_path

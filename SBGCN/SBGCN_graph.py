@@ -10,6 +10,10 @@ class GraphHeteroData(HeteroData):
         self['edge'].x = edge_features
         self['vertex'].x = vertex_features
 
+        self['face'].num_nodes = len(face_features)
+        self['edge'].num_nodes = len(edge_features)
+        self['vertex'].num_nodes = len(vertex_features)
+
         self['face', 'connected', 'edge'].edge_index = edge_index_face_edge
         self['edge', 'connects', 'vertex'].edge_index = edge_index_edge_vertex
 
@@ -27,4 +31,3 @@ class GraphHeteroData(HeteroData):
         print("Number of edges:", num_edges)
         print("Number of vertices:", num_vertices)
 
-    
