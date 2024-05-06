@@ -6,6 +6,7 @@ import torch.optim as optim
 from torch_geometric.data import DataLoader 
 
 import SBGCN_network
+import decoder
 from tqdm import tqdm
 
 
@@ -13,9 +14,11 @@ def train_graph_embedding(dataset, num_epochs=10, batch_size=1, learning_rate=0.
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # Define loss function and optimizer
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.BCELoss()
     model = SBGCN_network.FaceEdgeVertexGCN()
-    
+    decoder_model = decoder.SBGCN_Decoder()
+    optimizer = optim.Adam(list(model.parameters()) + list(decoder_model.parameters()), lr=learning_rate)
+
     # Create DataLoader for batching
     dataloader = DataLoader(dataset, batch_size=batch_size, 
                                  shuffle=False)
@@ -33,6 +36,15 @@ def train_graph_embedding(dataset, num_epochs=10, batch_size=1, learning_rate=0.
             graph.count_nodes()
                         # Forward pass
             x_f, x_e, x_v = model(graph)
+            reconstruct_matrix = decoder_model(x_f, x_e, x_v)
+            gt_matrix = graph['face'].z
+            loss = criterion(reconstruct_matrix, gt_matrix)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            
+            total_loss += loss.item() * len(batch)
+
 
     
     return model
