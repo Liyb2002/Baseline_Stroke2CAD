@@ -14,7 +14,6 @@ class SBGCN_Decoder(nn.Module):
     def forward(self, x, y, z):
         # Concatenate the three sets of embeddings along the feature dimension
         concatenated_embeddings = torch.cat((x, y, z), dim=0)
-        print("concatenated_embeddings", concatenated_embeddings.shape)
         
         # Apply fully connected layers
         out = F.relu(self.fc1(concatenated_embeddings))

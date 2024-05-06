@@ -33,8 +33,7 @@ def train_graph_embedding(dataset, num_epochs=10, batch_size=1, learning_rate=0.
 
             step_path = batch[0]
             graph = brep_read.create_graph_from_step_file(step_path)
-            graph.count_nodes()
-                        # Forward pass
+
             x_f, x_e, x_v = model(graph)
             reconstruct_matrix = decoder_model(x_f, x_e, x_v)
             gt_matrix = graph['face'].z
@@ -45,8 +44,8 @@ def train_graph_embedding(dataset, num_epochs=10, batch_size=1, learning_rate=0.
             
             total_loss += loss.item() * len(batch)
 
+        print(f"Epoch {epoch + 1}, Average Loss: {total_loss / len(dataset)}")
 
-    
     return model
 
 
@@ -60,7 +59,7 @@ def run():
 
 
     step_path =  ['../preprocessing/canvas/step_4.step']
-    for i in range(1):
+    for i in range(100):
         step_path.append('../preprocessing/canvas/step_4.step')
 
     dataset = brep_read.BRep_Dataset(step_path)
