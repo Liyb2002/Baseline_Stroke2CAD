@@ -8,15 +8,6 @@ from torch_geometric.data import DataLoader
 import SBGCN_network
 from tqdm import tqdm
 
-def graph_collate(batch):
-    print("aaaaaaaa;ldsfkjaljkfklj")
-
-    if isinstance(batch[0], SBGCN_network.GraphHeteroData):
-        print("hi")
-        return batch
-
-    return 0
-
 
 def train_graph_embedding(dataset, num_epochs=10, batch_size=1, learning_rate=0.001):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -27,7 +18,7 @@ def train_graph_embedding(dataset, num_epochs=10, batch_size=1, learning_rate=0.
     
     # Create DataLoader for batching
     dataloader = DataLoader(dataset, batch_size=batch_size, 
-                                 shuffle=False, collate_fn=graph_collate)
+                                 shuffle=False)
     
     # Training loop
     for epoch in range(num_epochs):
@@ -40,14 +31,8 @@ def train_graph_embedding(dataset, num_epochs=10, batch_size=1, learning_rate=0.
             step_path = batch[0]
             graph = brep_read.create_graph_from_step_file(step_path)
             graph.count_nodes()
-
-            print("-0--------get---------graph")
-
-            # Forward pass
+                        # Forward pass
             x_f, x_e, x_v = model(graph)
-            print("x_f", x_f.shape)
-            print("x_e", x_e.shape)
-            print("x_v", x_v.shape)
 
     
     return model

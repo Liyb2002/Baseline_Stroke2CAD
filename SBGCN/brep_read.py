@@ -158,7 +158,7 @@ def create_graph_from_step_file(step_path):
     edge_index_face_face_list = build_face_to_face(edge_index_face_edge_list)
     graph_data = SBGCN_graph.GraphHeteroData(face_features_list, edge_features_list, vertex_features_list,
                                   edge_index_face_edge_list, edge_index_edge_vertex_list, edge_index_face_face_list,
-                                  index_id)
+                                  index_id, index_counter)
     
     return graph_data
 
