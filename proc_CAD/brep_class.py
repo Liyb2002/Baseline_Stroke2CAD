@@ -21,6 +21,7 @@ class Brep:
             vertex_id = f"vertex_{self.idx}_{i}"
             vertex = Vertex(vertex_id, point)
             self.Vertices.append(vertex)
+            vertex_list.append(point)
 
         num_vertices = len(vertex_list)
         for i in range(num_vertices):
@@ -55,16 +56,17 @@ class Brep:
             if face.id.split('_')[1] == str(index):
                 face = {
                     'id': face.id,
-                    'vertices': face.vertices,
+                    'vertices': [vertex.tolist() for vertex in face.vertices],
                     'normal': [float(n) if isinstance(n, np.floating) else int(n) for n in face.normal]
                 }
                 operation['faces'].append(face)
 
         for edge in self.Edges:
             if edge.id.split('_')[1] == str(index):
+                
                 edge = {
                     'id': edge.id,
-                    'vertices': edge.vertices,
+                    'vertices': [vertex.tolist() for vertex in edge.vertices],
                 }
                 operation['edges'].append(edge)
 
