@@ -40,7 +40,6 @@ def build_sketch(count, Points_list):
 
 
 def build_extrude(count, canvas, target_face, extrude_amount, is_Add):
-    brep_dir = os.path.join(home_dir, "canvas", f"brep_{count}")
     stl_dir = os.path.join(home_dir, "canvas", f"vis_{count}.stl")
     step_dir = os.path.join(home_dir, "canvas", f"step_{count}.stp")
 
@@ -64,7 +63,6 @@ def build_extrude(count, canvas, target_face, extrude_amount, is_Add):
 
 
     canvas.part.export_stl(stl_dir)
-    canvas.part.export_brep(brep_dir)
     canvas.part.export_step(step_dir)
 
     return canvas
