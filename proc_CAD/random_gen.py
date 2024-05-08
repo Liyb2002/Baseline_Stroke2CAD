@@ -45,37 +45,7 @@ def generate_random_rectangle(perpendicular_axis):
 
     return points, normal_vector
 
-def save_points_to_json(points, index, filename='canvas/Program.json'):
-    # Create a dictionary to store the operation data
-    operation = {
-        'operation': 'sketch',
-        'vertices': []
-    }
-    
-    # Add each point with an ID to the vertices list
-    for count, point in enumerate(points):
-        vertex_id = f"v_{index}_{count}"
-        vertex = {
-            'id': vertex_id,
-            'coordinates': point.tolist()  # Convert numpy array to list for JSON serialization
-        }
-        operation['vertices'].append(vertex)
-    
-    # Load existing data from the file or create a new list if the file doesn't exist
-    try:
-        with open(filename, 'r') as f:
-            data = json.load(f)
-            # Ensure the data is a list to store multiple operations
-            if not isinstance(data, list):
-                data = []
-    except FileNotFoundError:
-        data = []
-    
-    # Append the new operation to the list of operations
-    data.append(operation)
-    
-    # Write the updated data to a JSON file
-    with open(filename, 'w') as f:
-        json.dump(data, f, indent=4)
-    
-    print(f"Data saved to {filename}")
+
+def generate_random_extrude_add():
+    random_float = np.random.uniform(0, 3)
+    return random_float
