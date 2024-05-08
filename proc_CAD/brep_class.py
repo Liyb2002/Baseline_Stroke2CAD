@@ -19,7 +19,7 @@ class Brep:
         vertex_list = []
         for i, point in enumerate(points):
             vertex_id = f"vertex_{self.idx}_{i}"
-            vertex = Vertex(vertex_id, point)
+            vertex = Vertex(vertex_id, point.tolist())
             self.Vertices.append(vertex)
             vertex_list.append(vertex)
 
@@ -59,7 +59,7 @@ class Brep:
             new_edges.append(edge)
 
         face_id = f"face_{self.idx}_{0}"
-        new_face = Face(face_id, new_vertices, target_face.normal)
+        new_face = Face(face_id, new_vertices, [-x for x in target_face.normal])
         self.Faces.append(new_face)
         new_faces.append(new_face)
         
@@ -78,7 +78,7 @@ class Brep:
                 new_vertices[(i + 1) % num_vertices], target_face.vertices[(i + 1) % num_vertices]
             ]
             normal = helper.compute_normal(side_face_vertices, new_vertices[(i + 2) % num_vertices])
-            side_face = Face(side_face_id, side_face_vertices, None)
+            side_face = Face(side_face_id, side_face_vertices, normal)
             self.Faces.append(side_face)
 
         self.idx += 1
@@ -86,18 +86,21 @@ class Brep:
 
 
 
-
-
-    def write_to_json(self):
+    def write_to_json(self, filename='./canvas/Program.json'):
+        data = []
         for count in range(0, self.idx):
             op = self.op[count]
-            if op == 'sketch':
-                self.write_sketch(count)
+            self.write_Op(op, count, data)
                 
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=4)
+        
+        print(f"Data saved to {filename}")
 
-    def write_sketch(self, index, filename='./canvas/Program.json'):
+
+    def write_Op(self, Op, index, data):
         operation = {
-            'operation': 'sketch',
+            'operation': Op,
             'faces': [],
             'edges': [],
             'vertices': []
@@ -109,8 +112,7 @@ class Brep:
                 face = {
                     'id': face.id,
                     'vertices': [vertex.id for vertex in face.vertices],
-                    'normal': [float(n) 
-                               if isinstance(n, np.floating) else int(n) for n in face.normal]
+                    'normal': [float(n) if isinstance(n, np.floating) else int(n) for n in face.normal]
                 }
                 operation['faces'].append(face)
 
@@ -129,22 +131,15 @@ class Brep:
             if vertex.id.split('_')[1] == str(index):
                 vertex = {
                     'id': vertex.id,
-                    'coordinates': vertex.position.tolist()  # Convert numpy array to list for JSON serialization
+                    'coordinates': vertex.position  # Convert numpy array to list for JSON serialization
                 }
                 operation['vertices'].append(vertex)
         
 
+        data.append(operation)
 
-
-        # Load existing data from the file or create a new list if the file doesn't exist        
-        # Append the new operation to the list of operations
-        data = operation
+        return data
         
-        # Write the updated data to a JSON file
-        with open(filename, 'w') as f:
-            json.dump(data, f, indent=4)
-        
-        print(f"Data saved to {filename}")
 
 
 

@@ -5,9 +5,9 @@ def compute_normal(face_vertices, other_point):
         raise ValueError("Need at least three points to define a plane")
 
 
-    p1 = face_vertices[0].position
-    p2 = face_vertices[1].position
-    p3 = face_vertices[2].position
+    p1 = np.array(face_vertices[0].position)
+    p2 = np.array(face_vertices[1].position)
+    p3 = np.array(face_vertices[2].position)
 
     # Create vectors from the first three points
     v1 = p2 - p1
