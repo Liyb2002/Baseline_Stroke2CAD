@@ -3,8 +3,6 @@ from build123d import *
 import os
 import numpy as np
 
-import build123.helper
-
 home_dir = Path(__file__).parent.parent
 
 
@@ -39,28 +37,18 @@ def build_sketch(count, Points_list):
     return perimeter
 
 
-def build_extrude(count, canvas, target_face, extrude_amount, is_Add):
+def build_extrude(count, canvas, target_face, extrude_amount):
     stl_dir = os.path.join(home_dir, "canvas", f"vis_{count}.stl")
     step_dir = os.path.join(home_dir, "canvas", f"step_{count}.stp")
 
     
     if canvas != None:
         with canvas: 
-            if is_Add >= 0:
-                extrude( target_face, amount=extrude_amount)
-            else:
-                # extrude( target_face, amount=extrude_amount)
-
-                extrude( target_face, amount=-extrude_amount, mode=Mode.SUBTRACT)
+            extrude( target_face, amount=extrude_amount)
 
     else:
         with BuildPart() as canvas:
-            if is_Add >= 0:
-                extrude( target_face, amount=extrude_amount)
-            else:
-                # extrude( target_face, amount=extrude_amount)
-                extrude( target_face, amount=-extrude_amount, mode=Mode.SUBTRACT)
-
+            extrude( target_face, amount=extrude_amount)
 
     canvas.part.export_stl(stl_dir)
     canvas.part.export_step(step_dir)

@@ -3,6 +3,9 @@
 import json
 import numpy as np
 import helper
+import random
+
+from basic_class import Face, Edge, Vertex
 
 class Brep:
     def __init__(self):
@@ -34,7 +37,7 @@ class Brep:
         self.Faces.append(face)
         
         self.idx += 1
-        self.op.append('sketch')
+        self.op.append(['sketch'])
 
     def add_extrude_add_op(self, amount):
         target_face = self.Faces[-1]
@@ -82,15 +85,34 @@ class Brep:
             self.Faces.append(side_face)
 
         self.idx += 1
-        self.op.append('extrude_addition')
+        self.op.append(['extrude_addition', target_face.id, amount])
+
+    def random_fillet(self):
+        
+        target_edge = random.choice(self.Edges)
+
+        if target_edge.round != True:
+            amount = np.random.uniform(0, 1)
+            target_edge.fillet_edge()
+
+            verts = []
+            for vert in target_edge.vertices:
+                verts.append(vert.position)
+            
+            self.idx += 1
+            self.op.append(['fillet', target_edge.id, 
+                            {'amount': amount}, 
+                            {
+                'verts': verts}
+                ])
 
 
 
     def write_to_json(self, filename='./canvas/Program.json'):
         data = []
         for count in range(0, self.idx):
-            op = self.op[count]
-            self.write_Op(op, count, data)
+            op = self.op[count][0]
+            self.write_Op(self.op[count], count, data)
                 
         with open(filename, 'w') as f:
             json.dump(data, f, indent=4)
@@ -139,30 +161,6 @@ class Brep:
         data.append(operation)
 
         return data
-        
+                
 
 
-
-
-
-class Face:
-    def __init__(self, id, vertices, normal):
-        print(f"An Face is created with ID: {id}")
-        self.id = id
-        self.vertices = vertices
-        self.normal = normal
-
-
-class Edge:
-    def __init__(self, id, vertices):
-        print(f"An edge is created with ID: {id}")
-        self.id = id
-        self.vertices = vertices
-
-class Vertex:
-    def __init__(self, id, vertices):
-        print(f"A vertex is created with ID: {id}")
-        self.id = id
-        self.position = vertices
-
-    
