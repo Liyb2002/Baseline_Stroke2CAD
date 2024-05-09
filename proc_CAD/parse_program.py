@@ -53,15 +53,12 @@ class parsed_program():
         fillet_amount = Op['operation'][2]['amount']
         verts = Op['operation'][3]['verts']
 
-        # print("fillet_amount", fillet_amount)
-        # print("verts", verts)
+        target_edge = helper.find_target_verts(verts, self.canvas.edges())
 
-        helper.find_target_verts(verts, self.canvas.edges())
+        if target_edge != None:
+            self.canvas = build123.protocol.build_fillet(self.Op_idx, self.canvas, target_edge, fillet_amount)
 
 
-        # existing_edges = self.canvas.edges()
-        # t_edge = existing_edges[0]
-        # print("vert", t_edge.vertices())
 
 # Example usage:
 file_path = './canvas/Program.json'

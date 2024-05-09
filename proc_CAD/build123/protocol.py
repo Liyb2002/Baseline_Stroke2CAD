@@ -41,7 +41,6 @@ def build_extrude(count, canvas, target_face, extrude_amount):
     stl_dir = os.path.join(home_dir, "canvas", f"vis_{count}.stl")
     step_dir = os.path.join(home_dir, "canvas", f"step_{count}.stp")
 
-    
     if canvas != None:
         with canvas: 
             extrude( target_face, amount=extrude_amount)
@@ -50,6 +49,19 @@ def build_extrude(count, canvas, target_face, extrude_amount):
         with BuildPart() as canvas:
             extrude( target_face, amount=extrude_amount)
 
+    canvas.part.export_stl(stl_dir)
+    canvas.part.export_step(step_dir)
+
+    return canvas
+
+
+def build_fillet(count, canvas, target_edge, radius):
+    stl_dir = os.path.join(home_dir, "canvas", f"vis_{count}.stl")
+    step_dir = os.path.join(home_dir, "canvas", f"step_{count}.stp")
+
+    with canvas:
+        fillet(target_edge, radius)
+    
     canvas.part.export_stl(stl_dir)
     canvas.part.export_step(step_dir)
 

@@ -47,7 +47,6 @@ def find_target_verts(target_vertices, edges) :
             }
         
         if edge_positions == target_positions:
-            print("found edge")
             return edge
         
     return None
