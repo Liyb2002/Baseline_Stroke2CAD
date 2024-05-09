@@ -28,3 +28,26 @@ def compute_normal(face_vertices, other_point):
 
     return normal_unit.tolist()
 
+
+def round_position(position, decimals=3):
+    return tuple(round(coord, decimals) for coord in position)
+
+
+def find_target_verts(target_vertices, edges) :
+    target_pos_1 = round_position(target_vertices[0])
+    target_pos_2 = round_position(target_vertices[1])
+    target_positions = {target_pos_1, target_pos_2}
+    
+    for edge in edges:
+        verts = edge.vertices()
+
+        edge_positions = {
+            round_position([verts[0].X, verts[0].Y, verts[0].Z]), 
+            round_position([verts[1].X, verts[1].Y, verts[1].Z])
+            }
+        
+        if edge_positions == target_positions:
+            print("found edge")
+            return edge
+        
+    return None

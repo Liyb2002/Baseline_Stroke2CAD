@@ -1,7 +1,7 @@
 import json
 import build123.protocol
 from basic_class import Face, Edge, Vertex
-
+import helper
 
 
 class parsed_program():
@@ -50,9 +50,18 @@ class parsed_program():
         self.Op_idx += 1
         
     def parse_fillet(self, Op):
-        existing_edges = self.canvas.edges()
-        t_edge = existing_edges[0]
-        print("vert", t_edge.vertices())
+        fillet_amount = Op['operation'][2]['amount']
+        verts = Op['operation'][3]['verts']
+
+        # print("fillet_amount", fillet_amount)
+        # print("verts", verts)
+
+        helper.find_target_verts(verts, self.canvas.edges())
+
+
+        # existing_edges = self.canvas.edges()
+        # t_edge = existing_edges[0]
+        # print("vert", t_edge.vertices())
 
 # Example usage:
 file_path = './canvas/Program.json'
