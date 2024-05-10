@@ -2,3 +2,5 @@ dataset/*
 *.png
 *.ckpt
 *.json
+*.stl
+*.stp
