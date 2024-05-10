@@ -47,5 +47,5 @@ def generate_random_rectangle(perpendicular_axis):
 
 
 def generate_random_extrude_add():
-    random_float = np.random.uniform(0, 3)
+    random_float = np.random.uniform(0.5, 3)
     return random_float

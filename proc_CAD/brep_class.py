@@ -4,6 +4,7 @@ import json
 import numpy as np
 import helper
 import random
+import random_gen
 
 from basic_class import Face, Edge, Vertex
 
@@ -17,8 +18,16 @@ class Brep:
         self.idx = 0
         
     
-    def add_sketch_op(self, points, normal):
+    def init_sketch_op(self):
 
+        axis = np.random.choice(['x', 'y', 'z'])
+        points, normal = random_gen.generate_random_rectangle(axis)
+        print("normal", normal)
+        
+        self._sketch_op(points, normal)
+
+
+    def _sketch_op(self, points, normal):
         vertex_list = []
         for i, point in enumerate(points):
             vertex_id = f"vertex_{self.idx}_{i}"
@@ -30,6 +39,7 @@ class Brep:
         for i in range(num_vertices):
             edge_id = f"edge_{self.idx}_{i}"
             edge = Edge(edge_id, [vertex_list[i], vertex_list[(i+1) % num_vertices]])  # Loop back to first vertex to close the shape
+            edge.fillet_edge()
             self.Edges.append(edge)
 
         face_id = f"face_{self.idx}_{0}"
@@ -39,7 +49,27 @@ class Brep:
         self.idx += 1
         self.op.append(['sketch'])
 
-    def add_extrude_add_op(self, amount):
+
+    def regular_sketch_op(self):
+
+        faces_with_future_sketch = [face for face in self.Faces if face.future_sketch
+                                    ]
+        if not faces_with_future_sketch:
+            return False
+        target_face = random.choice(faces_with_future_sketch)
+
+        boundary_points = [vert.position for vert in target_face.vertices]
+        normal = [ 0 - normal for normal in target_face.normal]
+
+        random_polygon_points = helper.find_rectangle_on_plane(boundary_points, normal)
+
+        self._sketch_op(random_polygon_points, normal)
+
+
+
+
+    def add_extrude_add_op(self):
+        amount = random_gen.generate_random_extrude_add()
         target_face = self.Faces[-1]
 
         new_vertices = []
@@ -48,7 +78,7 @@ class Brep:
 
         for i, vertex in enumerate(target_face.vertices):
 
-            new_pos = [vertex.position[j] + target_face.normal[j] * amount for j in range(3)]
+            new_pos = [vertex.position[j] - target_face.normal[j] * amount for j in range(3)]
             vertex_id = f"vertex_{self.idx}_{i}"
             new_vertex = Vertex(vertex_id, new_pos)
             self.Vertices.append(new_vertex)
@@ -89,24 +119,24 @@ class Brep:
 
     def random_fillet(self):
         
-        target_edge = random.choice(self.Edges)
+        edge_with_round = [edge for edge in self.Edges if not edge.round]
+        if not edge_with_round:
+            return False
+        target_edge = random.choice(edge_with_round)
 
-        if target_edge.round != True:
-            amount = np.random.uniform(0, 1)
-            target_edge.fillet_edge()
+        amount = np.random.uniform(0.2, 0.5)
+        target_edge.fillet_edge()
 
-            verts = []
-            for vert in target_edge.vertices:
-                verts.append(vert.position)
-            
-            self.idx += 1
-            self.op.append(['fillet', target_edge.id, 
-                            {'amount': amount}, 
-                            {
-                'verts': verts}
-                ])
-
-
+        verts = []
+        for vert in target_edge.vertices:
+            verts.append(vert.position)
+        
+        self.idx += 1
+        self.op.append(['fillet', target_edge.id, 
+                        {'amount': amount}, 
+                        {
+            'verts': verts}
+            ])
 
     def write_to_json(self, filename='./canvas/Program.json'):
         data = []
@@ -129,6 +159,7 @@ class Brep:
         }
 
                 # Add each point with an ID to the vertices list
+        
         for face in self.Faces:
             if face.id.split('_')[1] == str(index):
                 face = {

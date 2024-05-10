@@ -5,6 +5,10 @@ class Face:
         self.id = id
         self.vertices = vertices
         self.normal = normal
+        self.future_sketch = True
+    
+    def face_fixed(self):
+        self.future_sketch = False
 
 
 class Edge:
