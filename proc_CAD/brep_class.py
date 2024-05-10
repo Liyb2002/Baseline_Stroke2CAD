@@ -124,7 +124,7 @@ class Brep:
             return False
         target_edge = random.choice(edge_with_round)
 
-        amount = np.random.uniform(0.2, 0.5)
+        amount = random_gen.generate_random_fillet()
         target_edge.fillet_edge()
 
         verts = []
