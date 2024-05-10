@@ -120,3 +120,16 @@ def find_rectangle_on_plane(points, normal):
     translated_vertices = smaller_vertices + translation_vector
 
     return translated_vertices
+
+
+def find_triangle_on_plane(points, normal):
+
+    four_pts = find_rectangle_on_plane(points, normal)
+    idx1, idx2 = 0, 1
+    point1 = four_pts[idx1]
+    point2 = four_pts[idx2]
+
+    point3 = 0.5 * (four_pts[2] + four_pts[3])
+
+    return [point1, point2, point3]
+

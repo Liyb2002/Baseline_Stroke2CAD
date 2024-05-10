@@ -52,8 +52,7 @@ class Brep:
 
     def regular_sketch_op(self):
 
-        faces_with_future_sketch = [face for face in self.Faces if face.future_sketch
-                                    ]
+        faces_with_future_sketch = [face for face in self.Faces if face.future_sketch ]
         if not faces_with_future_sketch:
             return False
         target_face = random.choice(faces_with_future_sketch)
@@ -61,7 +60,7 @@ class Brep:
         boundary_points = [vert.position for vert in target_face.vertices]
         normal = [ 0 - normal for normal in target_face.normal]
 
-        random_polygon_points = helper.find_rectangle_on_plane(boundary_points, normal)
+        random_polygon_points = helper.find_triangle_on_plane(boundary_points, normal)
 
         self._sketch_op(random_polygon_points, normal)
 
