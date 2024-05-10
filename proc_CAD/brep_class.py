@@ -60,7 +60,7 @@ class Brep:
         boundary_points = [vert.position for vert in target_face.vertices]
         normal = [ 0 - normal for normal in target_face.normal]
 
-        random_polygon_points = helper.find_triangle_on_plane(boundary_points, normal)
+        random_polygon_points = helper.find_triangle_to_cut(boundary_points, normal)
 
         self._sketch_op(random_polygon_points, normal)
 

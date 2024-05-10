@@ -133,3 +133,25 @@ def find_triangle_on_plane(points, normal):
 
     return [point1, point2, point3]
 
+
+def find_triangle_to_cut(points, normal):
+
+    points = np.array(points)
+    
+    # Randomly shuffle the indices to choose three points
+    start_index = np.random.randint(0, 4)
+
+    # Determine the indices of the three points
+    indices = [(start_index + i) % 4 for i in range(3)]
+
+    
+    # Use the second point as the pin point
+    pin_index = indices[1]
+    pin_point = points[pin_index]
+    
+    # Interpolate between the pin point and the other two points
+    point1 = 0.5 * (pin_point + points[indices[0]])
+    point2 = 0.5 * (pin_point + points[indices[2]])
+
+    return [pin_point, point1, point2]
+
