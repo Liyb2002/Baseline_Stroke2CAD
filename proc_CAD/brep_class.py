@@ -60,9 +60,25 @@ class Brep:
         boundary_points = [vert.position for vert in target_face.vertices]
         normal = [ 0 - normal for normal in target_face.normal]
 
+        create_circle = True
+        if create_circle:
+            radius = random_gen.generate_random_cylinder_radius()
+            center = helper.random_circle(boundary_points, normal)
+            self.regular_sketch_circle(normal, radius, center)
+            return 
+
         random_polygon_points = helper.find_triangle_to_cut(boundary_points, normal)
 
         self._sketch_op(random_polygon_points, normal)
+
+    def regular_sketch_circle(self, normal, radius, center):
+        face_id = f"face_{self.idx}_{0}"
+        face = Face(face_id, [], normal)
+        face.circle(radius, center)
+        self.Faces.append(face)
+        
+        self.idx += 1
+        self.op.append(['sketch'])
 
 
 
@@ -161,11 +177,21 @@ class Brep:
         
         for face in self.Faces:
             if face.id.split('_')[1] == str(index):
-                face = {
+
+                if face.is_cirlce:
+                    face = {
                     'id': face.id,
-                    'vertices': [vertex.id for vertex in face.vertices],
+                    'radius': face.radius,
+                    'center': [pt for pt in face.center],
                     'normal': [float(n) if isinstance(n, np.floating) else int(n) for n in face.normal]
-                }
+                    }
+                else:
+                    face = {
+                        'id': face.id,
+                        'vertices': [vertex.id for vertex in face.vertices],
+                        'normal': [float(n) if isinstance(n, np.floating) else int(n) for n in face.normal]
+                    }
+
                 operation['faces'].append(face)
 
         for edge in self.Edges:

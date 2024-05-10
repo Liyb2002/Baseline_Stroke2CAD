@@ -5,10 +5,18 @@ class Face:
         self.id = id
         self.vertices = vertices
         self.normal = normal
+
         self.future_sketch = True
+        self.is_cirlce = False
     
     def face_fixed(self):
         self.future_sketch = False
+
+    def circle(self, radius, center):
+        self.is_cirlce = True
+        self.radius = radius
+        self.center = center
+
 
 
 class Edge:
