@@ -54,14 +54,14 @@ def find_target_verts(target_vertices, edges) :
     
     for edge in edges:
         verts = edge.vertices()
-
-        edge_positions = {
-            round_position([verts[0].X, verts[0].Y, verts[0].Z]), 
-            round_position([verts[1].X, verts[1].Y, verts[1].Z])
-            }
-        
-        if edge_positions == target_positions:
-            return edge
+        if len(verts) ==2 :
+            edge_positions = {
+                round_position([verts[0].X, verts[0].Y, verts[0].Z]), 
+                round_position([verts[1].X, verts[1].Y, verts[1].Z])
+                }
+            
+            if edge_positions == target_positions:
+                return edge
         
     return None
 
