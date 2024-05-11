@@ -52,9 +52,9 @@ class parsed_program():
     def parse_circle(self, Op):
         radius = Op['faces'][0]['radius']
         center = Op['faces'][0]['center']
-        # normal = Op['faces'][0]['normal']
+        normal = Op['faces'][0]['normal']
 
-        self.prev_sketch = build123.protocol.build_circle(self.Op_idx, radius, center)
+        self.prev_sketch = build123.protocol.build_circle(self.Op_idx, radius, center, normal)
         self.Op_idx += 1
         
     def parse_extrude_addition(self, Op):

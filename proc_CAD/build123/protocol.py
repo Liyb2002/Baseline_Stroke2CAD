@@ -36,18 +36,18 @@ def build_sketch(count, Points_list):
 
     return perimeter
 
-def build_circle(count, radius, point):
+def build_circle(count, radius, point, normal):
     brep_dir = os.path.join(home_dir, "canvas", f"brep_{count}.stp")
     stl_dir = os.path.join(home_dir, "canvas", f"vis_{count}.stl")
 
-    with BuildSketch(): 
-        with Locations((point[0],point[1],point[2])):
-            perimeter = Circle(radius=radius)
+    
+    with BuildSketch(Plane(origin=(point[0], point[1], point[2]), z_dir=(normal[0], normal[1], normal[2])) )as perimeter:
+        Circle(radius = 0.2)
 
-    perimeter.export_stl(stl_dir)
-    perimeter.export_brep(brep_dir)
+    # perimeter.sketch.export_stl(stl_dir)
+    # perimeter.sketch.export_brep(brep_dir)
 
-    return perimeter
+    return perimeter.sketch
 
 
 def build_extrude(count, canvas, target_face, extrude_amount):
