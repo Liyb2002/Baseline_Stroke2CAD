@@ -85,10 +85,10 @@ class Brep:
 
 
 
-
     def add_extrude_add_op(self):
         amount = random_gen.generate_random_extrude_add()
         target_face = self.Faces[-1]
+        new_face_normal = [-normal for normal in target_face.normal]
 
         new_vertices = []
         new_edges = []
@@ -96,7 +96,7 @@ class Brep:
 
         for i, vertex in enumerate(target_face.vertices):
 
-            new_pos = [vertex.position[j] - target_face.normal[j] * amount for j in range(3)]
+            new_pos = [vertex.position[j] - new_face_normal[j] * amount for j in range(3)]
             vertex_id = f"vertex_{self.idx}_{i}"
             new_vertex = Vertex(vertex_id, new_pos)
             self.Vertices.append(new_vertex)
@@ -110,7 +110,7 @@ class Brep:
             new_edges.append(edge)
 
         face_id = f"face_{self.idx}_{0}"
-        new_face = Face(face_id, new_vertices, [-x for x in target_face.normal])
+        new_face = Face(face_id, new_vertices, new_face_normal)
         self.Faces.append(new_face)
         new_faces.append(new_face)
         
@@ -134,6 +134,58 @@ class Brep:
 
         self.idx += 1
         self.op.append(['extrude_addition', target_face.id, amount])
+
+
+    def add_extrude_substract_op(self):
+        amount = random_gen.generate_random_extrude_add()
+        target_face = self.Faces[-1]
+        new_face_normal = [-normal for normal in target_face.normal]
+
+        new_vertices = []
+        new_edges = []
+        new_faces = []
+
+        for i, vertex in enumerate(target_face.vertices):
+
+            new_pos = [vertex.position[j] + new_face_normal[j] * amount for j in range(3)]
+            vertex_id = f"vertex_{self.idx}_{i}"
+            new_vertex = Vertex(vertex_id, new_pos)
+            self.Vertices.append(new_vertex)
+            new_vertices.append(new_vertex)
+
+        num_vertices = len(new_vertices)
+        for i in range(num_vertices):
+            edge_id = f"edge_{self.idx}_{i}"
+            edge = Edge(edge_id, [new_vertices[i], new_vertices[(i+1) % num_vertices]])  # Loop back to first vertex to close the shape
+            self.Edges.append(edge)
+            new_edges.append(edge)
+
+        face_id = f"face_{self.idx}_{0}"
+        new_face = Face(face_id, new_vertices, new_face_normal)
+        self.Faces.append(new_face)
+        new_faces.append(new_face)
+        
+        
+        #create side edges and faces
+        for i in range(num_vertices):
+            # Vertical edges from old vertices to new vertices
+            vertical_edge_id = f"edge_{self.idx}_{i+num_vertices}"
+            vertical_edge = Edge(vertical_edge_id, [target_face.vertices[i], new_vertices[i]])
+            self.Edges.append(vertical_edge)
+
+            # Side faces formed between pairs of old and new vertices
+            side_face_id = f"face_{self.idx}_{i}"
+            side_face_vertices = [
+                target_face.vertices[i], new_vertices[i],
+                new_vertices[(i + 1) % num_vertices], target_face.vertices[(i + 1) % num_vertices]
+            ]
+            normal = helper.compute_normal(side_face_vertices, new_vertices[(i + 2) % num_vertices])
+            side_face = Face(side_face_id, side_face_vertices, normal)
+            self.Faces.append(side_face)
+
+        self.idx += 1
+        self.op.append(['extrude_substraction', target_face.id, amount])
+
 
     def random_fillet(self):
         

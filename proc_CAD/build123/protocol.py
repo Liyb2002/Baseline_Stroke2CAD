@@ -10,7 +10,7 @@ def build_sketch(count, Points_list):
     brep_dir = os.path.join(home_dir, "canvas", f"brep_{count}.stp")
     stl_dir = os.path.join(home_dir, "canvas", f"vis_{count}.stl")
 
-    with BuildSketch():
+    with BuildSketch(Plane(z_dir=(normal[0], normal[1], normal[2])) )as perimeter:
         with BuildLine():
             lines = []
             for i in range(0, len(Points_list), 2):
@@ -29,7 +29,7 @@ def build_sketch(count, Points_list):
                 line = Line(start_point, end_point)
                 lines.append(line)
 
-        perimeter = make_face()
+        make_face()
 
     perimeter.export_stl(stl_dir)
     perimeter.export_brep(brep_dir)
@@ -44,8 +44,8 @@ def build_circle(count, radius, point, normal):
     with BuildSketch(Plane(origin=(point[0], point[1], point[2]), z_dir=(normal[0], normal[1], normal[2])) )as perimeter:
         Circle(radius = 0.2)
 
-    # perimeter.sketch.export_stl(stl_dir)
-    # perimeter.sketch.export_brep(brep_dir)
+    perimeter.sketch.export_stl(stl_dir)
+    perimeter.sketch.export_brep(brep_dir)
 
     return perimeter.sketch
 

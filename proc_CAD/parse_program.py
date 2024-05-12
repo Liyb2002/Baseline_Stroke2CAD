@@ -24,6 +24,9 @@ class parsed_program():
                 if operation[0] == 'extrude_addition':
                     self.parse_extrude_addition(Op)
                 
+                if operation[0] == 'extrude_substract':
+                    self.parse_extrude_addition(Op)
+
                 if operation[0] == 'fillet':
                     self.parse_fillet(Op)
 
@@ -36,6 +39,7 @@ class parsed_program():
             return 
 
         point_list = [vert['coordinates'] for vert in Op['vertices']]
+        normal = Op['faces'][0]['normal']
         
         new_point_list = [point_list[0]]  # Start with the first point
         for i in range(1, len(point_list)):
@@ -46,7 +50,7 @@ class parsed_program():
         # Add the first point again at the end to close the loop
         new_point_list.append(point_list[0])
 
-        self.prev_sketch = build123.protocol.build_sketch(self.Op_idx, new_point_list)
+        self.prev_sketch = build123.protocol.build_sketch(self.Op_idx, new_point_list, normal)
         self.Op_idx += 1
 
     def parse_circle(self, Op):
@@ -62,6 +66,11 @@ class parsed_program():
         self.canvas = build123.protocol.build_extrude(self.Op_idx, self.canvas, self.prev_sketch, extrude_amount)
         self.Op_idx += 1
         
+    def parse_extrude_substraction(self, Op):
+        extrude_amount = Op['operation'][2]
+        self.canvas = build123.protocol.build_extrude(self.Op_idx, self.canvas, self.prev_sketch, extrude_amount)
+        self.Op_idx += 1
+
     def parse_fillet(self, Op):
         fillet_amount = Op['operation'][2]['amount']
         verts = Op['operation'][3]['verts']
