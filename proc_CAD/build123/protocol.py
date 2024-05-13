@@ -6,7 +6,7 @@ import numpy as np
 home_dir = Path(__file__).parent.parent
 
 
-def build_sketch(count, Points_list):
+def build_sketch(count, Points_list, output):
     brep_dir = os.path.join(home_dir, "canvas", f"brep_{count}.stp")
     stl_dir = os.path.join(home_dir, "canvas", f"vis_{count}.stl")
 
@@ -31,12 +31,13 @@ def build_sketch(count, Points_list):
 
         perimeter = make_face()
 
-    perimeter.export_stl(stl_dir)
-    perimeter.export_brep(brep_dir)
+    if output:
+        perimeter.export_stl(stl_dir)
+        perimeter.export_brep(brep_dir)
 
     return perimeter
 
-def build_circle(count, radius, point, normal):
+def build_circle(count, radius, point, normal, output):
     brep_dir = os.path.join(home_dir, "canvas", f"brep_{count}.stp")
     stl_dir = os.path.join(home_dir, "canvas", f"vis_{count}.stl")
 
@@ -44,13 +45,14 @@ def build_circle(count, radius, point, normal):
     with BuildSketch(Plane(origin=(point[0], point[1], point[2]), z_dir=(normal[0], normal[1], normal[2])) )as perimeter:
         Circle(radius = 0.2)
 
-    # perimeter.sketch.export_stl(stl_dir)
-    # perimeter.sketch.export_brep(brep_dir)
+    if output:
+        perimeter.sketch.export_stl(stl_dir)
+        perimeter.sketch.export_brep(brep_dir)
 
     return perimeter.sketch
 
 
-def build_extrude(count, canvas, target_face, extrude_amount):
+def build_extrude(count, canvas, target_face, extrude_amount, output):
     stl_dir = os.path.join(home_dir, "canvas", f"vis_{count}.stl")
     step_dir = os.path.join(home_dir, "canvas", f"step_{count}.stp")
 
@@ -69,20 +71,22 @@ def build_extrude(count, canvas, target_face, extrude_amount):
         with BuildPart() as canvas:
             extrude( target_face, amount=extrude_amount)
 
-    canvas.part.export_stl(stl_dir)
-    canvas.part.export_step(step_dir)
+    if output:
+        canvas.part.export_stl(stl_dir)
+        canvas.part.export_step(step_dir)
 
     return canvas
 
 
-def build_fillet(count, canvas, target_edge, radius):
+def build_fillet(count, canvas, target_edge, radius, output):
     stl_dir = os.path.join(home_dir, "canvas", f"vis_{count}.stl")
     step_dir = os.path.join(home_dir, "canvas", f"step_{count}.stp")
 
     with canvas:
         fillet(target_edge, radius)
     
-    canvas.part.export_stl(stl_dir)
-    canvas.part.export_step(step_dir)
+    if output:
+        canvas.part.export_stl(stl_dir)
+        canvas.part.export_step(step_dir)
 
     return canvas
