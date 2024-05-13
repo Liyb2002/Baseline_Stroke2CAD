@@ -21,8 +21,8 @@ class parsed_program():
                 if operation[0] == 'sketch':
                     self.parse_sketch(Op)
                 
-                if operation[0] == 'extrude_addition':
-                    self.parse_extrude_addition(Op)
+                if operation[0] == 'extrude_addition' or operation[0] == 'extrude_substraction':
+                    self.parse_extrude(Op)
                 
                 if operation[0] == 'fillet':
                     self.parse_fillet(Op)
@@ -57,7 +57,8 @@ class parsed_program():
         self.prev_sketch = build123.protocol.build_circle(self.Op_idx, radius, center, normal)
         self.Op_idx += 1
         
-    def parse_extrude_addition(self, Op):
+    def parse_extrude(self, Op):
+        print("aaa", Op['operation'])
         extrude_amount = Op['operation'][2]
         self.canvas = build123.protocol.build_extrude(self.Op_idx, self.canvas, self.prev_sketch, extrude_amount)
         self.Op_idx += 1

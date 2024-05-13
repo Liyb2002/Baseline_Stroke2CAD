@@ -64,9 +64,6 @@ class Brep:
         if create_circle:
             radius = random_gen.generate_random_cylinder_radius()
             center = helper.random_circle(boundary_points, normal)
-
-            print("center", center)
-            print("boundary_points", boundary_points)
             self.regular_sketch_circle(normal, radius, center)
             return 
 
@@ -84,10 +81,12 @@ class Brep:
         self.op.append(['sketch'])
 
 
-
-
     def add_extrude_add_op(self):
         amount = random_gen.generate_random_extrude_add()
+
+        if self.idx != 1:
+            amount = -amount
+
         target_face = self.Faces[-1]
         new_face_normal = [-x for x in target_face.normal]
 
@@ -134,7 +133,10 @@ class Brep:
             self.Faces.append(side_face)
 
         self.idx += 1
-        self.op.append(['extrude_addition', target_face.id, amount])
+        if amount < 0:
+            self.op.append(['extrude_substraction', target_face.id, amount])
+        else:
+            self.op.append(['extrude_addition', target_face.id, amount])
 
     def random_fillet(self):
         
