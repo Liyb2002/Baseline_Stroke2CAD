@@ -3,26 +3,27 @@ import brep_read
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+def plot(edges_features):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    for edge_info in edges_features:
+        if not edge_info['is_curve']:
+            xs, ys, zs = zip(*edge_info['vertices'])
+            ax.plot(xs, ys, zs, marker='o', color='r', label='Vertices')  
+
+        if edge_info['is_curve'] and 'sampled_points' in edge_info:
+            xp, yp, zp = zip(*edge_info['sampled_points'])
+            ax.plot(xp, yp, zp, linestyle='--', color='b', label='Sampled Points')
+            
+    # Setting labels
+    ax.set_xlabel('X Coordinate')
+    ax.set_ylabel('Y Coordinate')
+    ax.set_zlabel('Z Coordinate')
+
+    # Show plot
+    plt.show()
+
+
 edges_features = brep_read.create_graph_from_step_file('./canvas/step_5.stp')
-
-
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-
-for edge in edges_features:
-
-    x_coords = [edge[0], edge[3]]
-    y_coords = [edge[1], edge[4]]
-    z_coords = [edge[2], edge[5]]
-
-    # Plot each edge
-    # print("x_coords", x_coords, "y_coords", y_coords, "z_coords", z_coords)
-    ax.plot(x_coords, y_coords, z_coords, 'b-')  # 'b-' specifies a blue line
-
-# Setting labels
-ax.set_xlabel('X Coordinate')
-ax.set_ylabel('Y Coordinate')
-ax.set_zlabel('Z Coordinate')
-
-# Show plot
-plt.show()
+plot(edges_features)

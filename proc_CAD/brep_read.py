@@ -6,6 +6,10 @@ from OCC.Core.BRepTools import breptools
 from OCC.Core.BRep import BRep_Tool
 from OCC.Core.GProp import GProp_GProps
 from OCC.Core.BRepGProp import brepgprop
+from OCC.Core.BRepAdaptor import BRepAdaptor_Curve
+from OCC.Core.GeomAbs import GeomAbs_Line, GeomAbs_Circle, GeomAbs_Ellipse, GeomAbs_CurveType
+from OCC.Core.GCPnts import GCPnts_UniformAbscissa
+from OCC.Core.GeomAdaptor import GeomAdaptor_Curve
 
 from torch.utils.data import Dataset
 from itertools import combinations
@@ -39,6 +43,28 @@ def create_edge_node(edge):
         vertex_explorer.Next()
 
     edge_features = [verts[0][0], verts[0][1], verts[0][2], verts[1][0], verts[1][1], verts[1][2]]
+
+
+    curve_adaptor = BRepAdaptor_Curve(edge)
+    curve_type = curve_adaptor.GetType()
+
+    is_curve = curve_type != GeomAbs_Line
+
+    edge_features = {
+        'vertices': verts,
+        'is_curve': is_curve,
+        'sampled_points': []
+    }
+
+    if is_curve:
+        num_points = 10
+
+        sampler = GCPnts_UniformAbscissa(curve_adaptor, num_points)
+        if sampler.IsDone():
+            for i in range(1, num_points + 1):
+                p = curve_adaptor.Value(sampler.Parameter(i))
+                edge_features['sampled_points'].append([p.X(), p.Y(), p.Z()])
+
     return edge_features
 
 
