@@ -52,8 +52,10 @@ def create_edge_node(edge):
 
     edge_features = {
         'vertices': verts,
+        'type': 'feature_line',
         'is_curve': is_curve,
-        'sampled_points': []
+        'sampled_points': [],
+        'color' : 0.0
     }
 
     if is_curve:
