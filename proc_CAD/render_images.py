@@ -3,6 +3,7 @@ import os
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import json
+import helper
 
 def find_bounding_box(edges_features):
     min_x, min_y, min_z = float('inf'), float('inf'), float('inf')
@@ -41,10 +42,11 @@ def find_bounding_box(edges_features):
     for edge in bounding_box_edges:
         edge_feature = {
             'vertices': [bounding_box_vertices[edge[0]], bounding_box_vertices[edge[1]]],
-            'type': 'construction_line',
+            'type': 'scaffold',
             'is_curve': False,
             'sampled_points': [],
-            'color' : 0.0
+            'sigma' : 0.0,
+            'mu': 0.0
         }
         edges_features.append(edge_feature)
 
@@ -60,7 +62,7 @@ def plot(edges_features):
     for edge_info in edges_features:
         if not edge_info['is_curve']:
             xs, ys, zs = zip(*edge_info['vertices'])
-            if edge_info['type'] == 'construction_line':
+            if edge_info['type'] == 'scaffold':
                 ax.plot(xs, ys, zs, marker='o', color='green', label='Construction Line')
             else:
                 ax.plot(xs, ys, zs, marker='o', color='red', label='Vertices')  
@@ -79,11 +81,23 @@ def plot(edges_features):
     # Show plot
     plt.show()
 
-def optimize_opacities(edges_features, stylesheet, obj_center):
-    cam_pos = obj_center + [2.0, 2.0, 2.0]
-    up_vec = [0,1,0]
+def optimize_opacities(edges_features, stylesheet):
+    for edge_info in edges_features:
+        edge_type = edge_info['type']
 
+        if edge_type == 'scaffold':
+            edge_info['mu'] = stylesheet["opacities_per_type"]["scaffold"]["mu"]
+            edge_info['sigma'] = stylesheet["opacities_per_type"]["scaffold"]["sigma"]
+            
+        if edge_type == 'feature_line':
+            edge_info['mu'] = stylesheet["opacities_per_type"]["vis_edges"]["mu"]
+            edge_info['sigma'] = stylesheet["opacities_per_type"]["vis_edges"]["sigma"]
 
+    
+    return edges_features
+
+def project_points(edges_features, obj_center):
+    helper.project_points(edges_features, obj_center)
 
 
 
@@ -104,6 +118,7 @@ if os.path.exists(style_sheet_file_name):
 
 
 edges_features = brep_read.create_graph_from_step_file('./canvas/step_5.stp')
-edges_features, object_center= find_bounding_box(edges_features)
-optimize_opacities(edges_features, stylesheet, object_center)
+edges_features, obj_center= find_bounding_box(edges_features)
+edges_features = optimize_opacities(edges_features, stylesheet)
+project_points(edges_features, obj_center)
 plot(edges_features)
