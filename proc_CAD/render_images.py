@@ -98,8 +98,8 @@ def optimize_opacities(edges_features, stylesheet):
     return edges_features
 
 def project_points(edges_features, obj_center):
-    helper.project_points(edges_features, obj_center)
-
+    edges_features = helper.project_points(edges_features, obj_center)
+    return edges_features
 
 
 # Load styles
@@ -121,5 +121,5 @@ if os.path.exists(style_sheet_file_name):
 edges_features = brep_read.create_graph_from_step_file('./canvas/step_5.stp')
 edges_features, obj_center= find_bounding_box(edges_features)
 edges_features = optimize_opacities(edges_features, stylesheet)
-project_points(edges_features, obj_center)
-# plot(edges_features)
+edges_features = project_points(edges_features, obj_center)
+plot(edges_features)

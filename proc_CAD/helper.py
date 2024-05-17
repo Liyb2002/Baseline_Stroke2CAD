@@ -238,19 +238,17 @@ def project_points(feature_lines, obj_center, img_dims=[1000, 1000]):
     for edge_info in feature_lines:
         scaled_points = []
         for p in edge_info['projected_edge']:
-            print("p", p)
             p[1] *= -1
             p *= 0.5*screen_diag/bbox_diag
-            #p *= 0.8*500/bbox_diag
             p += np.array([img_dims[0]/2, img_dims[1]/2])
             scaled_points.append(p)
         edge_info['projected_edge'] = np.array(scaled_points)
 
     
-    for edge_info in feature_lines:
-        f_line = edge_info['projected_edge']
-        plt.plot(f_line[:, 0], f_line[:, 1], c="black")
-    plt.show()
+    # for edge_info in feature_lines:
+    #     f_line = edge_info['projected_edge']
+    #     plt.plot(f_line[:, 0], f_line[:, 1], c="black")
+    # plt.show()
 
     return feature_lines
 
