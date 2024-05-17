@@ -55,6 +55,7 @@ def create_edge_node(edge):
         'type': 'feature_line',
         'is_curve': is_curve,
         'sampled_points': [],
+        'projected_edge': [],
         'sigma' : 0.0,
         'mu': 0.0
     }

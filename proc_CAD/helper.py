@@ -183,7 +183,6 @@ def project_points(feature_lines, obj_center, img_dims=[1000, 1000]):
                                             up_vec)
     near = 0.001
     far = 1.0
-    view_edges = []
     total_view_points = []
 
     for edge_info in feature_lines:
@@ -195,12 +194,12 @@ def project_points(feature_lines, obj_center, img_dims=[1000, 1000]):
             hom_p[:3] = p
             proj_p = np.matmul(view_mat.T, hom_p)
             view_points.append(proj_p)
+            
             total_view_points.append(proj_p)
-        view_edges.append(np.array(view_points))
+        edge_info['projected_edge'].append(np.array(view_points))
     
-
-    # for f_line in view_edges:
-    #    plt.plot(f_line[:, 0], f_line[:, 1], c="black")
+    # for edge_info in feature_lines:
+    #    plt.plot(edge_info['projected_edge'][0][:, 0], edge_info['projected_edge'][0][:, 1], c="black")
     # plt.show()
 
 
@@ -215,14 +214,17 @@ def project_points(feature_lines, obj_center, img_dims=[1000, 1000]):
 
     total_projected_points = []
     projected_edges = []
-    for f_line in view_edges:
+
+    for edge_info in feature_lines:
         projected_points = []
-        for p in f_line.copy():
+        for p in edge_info['projected_edge'][0]:
             proj_p = np.matmul(proj_mat, p)
             proj_p[:3] /= proj_p[-1]
             total_projected_points.append(proj_p[:2])
             projected_points.append(proj_p[:2])
         projected_edges.append(np.array(projected_points))
+
+        edge_info['projected_edge'] = projected_edges[-1]
     total_projected_points = np.array(total_projected_points)
 
     # screen-space
@@ -243,9 +245,9 @@ def project_points(feature_lines, obj_center, img_dims=[1000, 1000]):
         scaled_edges.append(np.array(scaled_points))
 
 
-    # for f_line in scaled_edges:
-    #    plt.plot(f_line[:, 0], f_line[:, 1], c="black")
-    # plt.show()
+    for f_line in scaled_edges:
+       plt.plot(f_line[:, 0], f_line[:, 1], c="black")
+    plt.show()
 
     return scaled_edges
 

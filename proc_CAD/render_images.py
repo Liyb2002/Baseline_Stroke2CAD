@@ -45,6 +45,7 @@ def find_bounding_box(edges_features):
             'type': 'scaffold',
             'is_curve': False,
             'sampled_points': [],
+            'projected_edge': [],
             'sigma' : 0.0,
             'mu': 0.0
         }
