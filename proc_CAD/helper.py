@@ -5,6 +5,8 @@ from shapely.geometry.polygon import orient
 from shapely import affinity
 import pyrr
 
+import matplotlib.pyplot as plt
+
 
 def compute_normal(face_vertices, other_point):
     if len(face_vertices) < 3:
@@ -174,7 +176,7 @@ def random_circle(points, normal):
 def project_points(feature_lines, obj_center, img_dims=[1000, 1000]):
 
     obj_center = np.array(obj_center)
-    cam_pos = obj_center + np.array([2,2,2])
+    cam_pos = obj_center + np.array([5,5,5])
     up_vec = np.array([0,1,0])
     view_mat = pyrr.matrix44.create_look_at(cam_pos,
                                             np.array([0, 0, 0]),
@@ -184,7 +186,6 @@ def project_points(feature_lines, obj_center, img_dims=[1000, 1000]):
     view_edges = []
     total_view_points = []
 
-    print("-------------------------")
     for edge_info in feature_lines:
         view_points = []
         vertices = edge_info['vertices']
@@ -197,19 +198,17 @@ def project_points(feature_lines, obj_center, img_dims=[1000, 1000]):
             total_view_points.append(proj_p)
         view_edges.append(np.array(view_points))
     
-    print("view_edges", view_edges)
 
-
-    
-    #for f_line in view_edges:
+    # for f_line in view_edges:
     #    plt.plot(f_line[:, 0], f_line[:, 1], c="black")
-    #plt.show()
+    # plt.show()
+
+
+
     total_view_points = np.array(total_view_points)
     max = np.array([np.max(total_view_points[:, 0]), np.max(total_view_points[:, 1]), np.max(total_view_points[:, 2])])
     min = np.array([np.min(total_view_points[:, 0]), np.min(total_view_points[:, 1]), np.min(total_view_points[:, 2])])
 
-    #proj_mat = pyrr.matrix44.create_perspective_projection_matrix_from_bounds(left=min[0], right=max[0], bottom=min[1], top=max[1],
-    #                                                                          near=near, far=far)
     max_dim = np.maximum(np.abs(max[0]-min[0]), np.abs(max[1]-min[1]))
     proj_mat = pyrr.matrix44.create_perspective_projection_matrix_from_bounds(left=-max_dim/2, right=max_dim/2, bottom=-max_dim/2, top=max_dim/2,
                                                                               near=near, far=far)
@@ -242,6 +241,11 @@ def project_points(feature_lines, obj_center, img_dims=[1000, 1000]):
             p += np.array([img_dims[0]/2, img_dims[1]/2])
             scaled_points.append(p)
         scaled_edges.append(np.array(scaled_points))
+
+
+    # for f_line in scaled_edges:
+    #    plt.plot(f_line[:, 0], f_line[:, 1], c="black")
+    # plt.show()
 
     return scaled_edges
 
