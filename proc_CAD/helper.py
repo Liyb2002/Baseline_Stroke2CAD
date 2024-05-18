@@ -188,6 +188,8 @@ def project_points(feature_lines, obj_center, img_dims=[1000, 1000]):
     for edge_info in feature_lines:
         view_points = []
         vertices = edge_info['vertices']
+        if edge_info['is_curve']:
+            vertices = edge_info['sampled_points']
         for p in vertices:
             p -= obj_center
             hom_p = np.ones(4)

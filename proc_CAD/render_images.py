@@ -5,6 +5,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import json
 import helper
 import random
+import numpy as np
 
 def find_bounding_box(edges_features):
     min_x, min_y, min_z = float('inf'), float('inf'), float('inf')
@@ -94,8 +95,12 @@ def optimize_opacities(edges_features, stylesheet):
         if edge_type == 'feature_line':
             edge_info['mu'] = stylesheet["opacities_per_type"]["vis_edges"]["mu"]
             edge_info['sigma'] = stylesheet["opacities_per_type"]["vis_edges"]["sigma"]
+        
+        opacity = np.random.normal(loc=edge_info['mu'], scale=edge_info['sigma']/2, size=1)[0]
+        opacity = max(0.0, min(1.0, opacity))
+        edge_info['opacity'] = opacity
 
-    
+
     return edges_features
 
 def project_points(edges_features, obj_center):
@@ -135,13 +140,18 @@ def plot_2d(edges_features):
 
     for edge_info in edges_features:
         f_line = edge_info['projected_edge']
-        point1 = f_line[0]
-        point2 = f_line[1]
+        opacity = edge_info['opacity']
 
-        x_values = [point1[0], point2[0]]
-        y_values = [point1[1], point2[1]]
+        if edge_info['is_curve']:
+            x_values = [point[0] for point in f_line]
+            y_values = [point[1] for point in f_line]
+        else:
+            point1 = f_line[0]
+            point2 = f_line[1]
+            x_values = [point1[0], point2[0]]
+            y_values = [point1[1], point2[1]]
 
-        plt.plot(x_values, y_values, c="black")
+        plt.plot(x_values, y_values, c="black", alpha=opacity)
     plt.show()
 
 
