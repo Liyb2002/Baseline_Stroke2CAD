@@ -169,6 +169,7 @@ def perturb_strokes(edges_features, noise_level=1.0):
         # Update the projected_edge with the perturbed points
         edge_info['projected_edge'] = perturbed_edge
     
+
 # Load styles
 stroke_dataset_designer_name = 'Professional1'
 
@@ -190,6 +191,7 @@ edges_features, obj_center= find_bounding_box(edges_features)
 edges_features = optimize_opacities(edges_features, stylesheet)
 edges_features = project_points(edges_features, obj_center)
 edges_features = overshoot_stroke(edges_features)
+remove_duplicate(edges_features)
 perturb_strokes(edges_features)
 
 plot_2d(edges_features)
