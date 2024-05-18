@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import json
 import helper
+import random
 
 def find_bounding_box(edges_features):
     min_x, min_y, min_z = float('inf'), float('inf'), float('inf')
@@ -101,6 +102,48 @@ def project_points(edges_features, obj_center):
     edges_features = helper.project_points(edges_features, obj_center)
     return edges_features
 
+def overshoot_stroke(edges_features, factor = 10):
+    for edge_info in edges_features:
+        if edge_info['is_curve']:
+            continue
+        
+        projected_edge = edge_info['projected_edge']
+        point_1 = projected_edge[0]
+        point_2 = projected_edge[1]
+
+        # Calculate the direction vector from point_1 to point_2
+        direction = [point_2[i] - point_1[i] for i in range(len(point_1))]
+        
+        # Normalize the direction vector
+        length = sum(d**2 for d in direction)**0.5
+        direction = [d / length for d in direction]
+        
+        # Generate a small random overshoot factor
+        overshoot_factor = factor * random.random()  # Adjust the factor scale as needed
+
+        point_1 = [point_1[i] - direction[i] * overshoot_factor for i in range(len(point_1))]
+        point_2 = [point_2[i] + direction[i] * overshoot_factor for i in range(len(point_2))]
+
+        edge_info['projected_edge'] = [point_1, point_2]
+
+
+    return edges_features
+
+def plot_2d(edges_features):
+    plt.figure(figsize=(8, 6))
+    ax = plt.gca()
+
+    for edge_info in edges_features:
+        f_line = edge_info['projected_edge']
+        point1 = f_line[0]
+        point2 = f_line[1]
+
+        x_values = [point1[0], point2[0]]
+        y_values = [point1[1], point2[1]]
+
+        plt.plot(x_values, y_values, c="black")
+    plt.show()
+
 
 # Load styles
 stroke_dataset_designer_name = 'Professional1'
@@ -122,4 +165,5 @@ edges_features = brep_read.create_graph_from_step_file('./canvas/step_5.stp')
 edges_features, obj_center= find_bounding_box(edges_features)
 edges_features = optimize_opacities(edges_features, stylesheet)
 edges_features = project_points(edges_features, obj_center)
-plot(edges_features)
+edges_features = overshoot_stroke(edges_features)
+plot_2d(edges_features)
