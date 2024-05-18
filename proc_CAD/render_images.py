@@ -151,10 +151,24 @@ def plot_2d(edges_features):
             x_values = [point1[0], point2[0]]
             y_values = [point1[1], point2[1]]
 
-        plt.plot(x_values, y_values, c="black", alpha=opacity)
+        plt.plot(x_values, y_values, c="black", alpha=opacity * 0.5)
     plt.show()
 
-
+def perturb_strokes(edges_features, noise_level=1.0):
+    for edge_info in edges_features:
+        if edge_info['is_curve']:
+            continue  # Assuming we only perturb straight line segments here for simplicity
+        projected_edge = edge_info['projected_edge']
+        perturbed_edge = []
+        for point in projected_edge:
+            # Generate random noise
+            noise = np.random.normal(0, noise_level, 2)
+            # Perturb the original point by adding noise
+            perturbed_point = (point[0] + noise[0], point[1] + noise[1])
+            perturbed_edge.append(perturbed_point)
+        # Update the projected_edge with the perturbed points
+        edge_info['projected_edge'] = perturbed_edge
+    
 # Load styles
 stroke_dataset_designer_name = 'Professional1'
 
@@ -176,4 +190,6 @@ edges_features, obj_center= find_bounding_box(edges_features)
 edges_features = optimize_opacities(edges_features, stylesheet)
 edges_features = project_points(edges_features, obj_center)
 edges_features = overshoot_stroke(edges_features)
+perturb_strokes(edges_features)
+
 plot_2d(edges_features)
