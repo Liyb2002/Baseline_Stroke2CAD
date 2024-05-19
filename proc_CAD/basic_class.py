@@ -25,14 +25,24 @@ class Edge:
         self.id = id
         self.vertices = vertices
         self.round = False
+
+        self.Op = []
+        self.order_count = 0
     
     def fillet_edge(self):
         self.round = True
+    
+    def set_Op(self, Op):
+        self.Op.append(Op)
+    
+    def set_order_count(self, order_count):
+        self.order_count = order_count
+
 
 class Vertex:
-    def __init__(self, id, vertices):
+    def __init__(self, id, position):
         print(f"A vertex is created with ID: {id}")
         self.id = id
-        self.position = vertices
+        self.position = position
 
-    
+

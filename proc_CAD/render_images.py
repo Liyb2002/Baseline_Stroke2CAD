@@ -56,7 +56,62 @@ def find_bounding_box(edges_features):
 
     object_center = [(min_x + max_x) / 2, (min_y + max_y) / 2, (min_z + max_z) / 2]
 
+    add_grid_lines(edges_features, min_x, min_y, min_z, max_x, max_y, max_z)
+
     return edges_features, object_center
+
+
+def add_grid_lines(edges_features, min_x, min_y, min_z, max_x, max_y, max_z):
+    # Define a distance threshold to determine "far from" the bounding box
+    distance_threshold = 0.2  # Define the threshold as needed
+
+    # Collect all vertices from edges_features
+    all_vertices = []
+    for edge in edges_features:
+        all_vertices.extend(edge['vertices'])
+
+    # Check each vertex if it is outside the bounding box by the distance threshold
+    for vertex in all_vertices:
+        x, y, z = vertex
+        # Check distance from bounding box and add grid lines if necessary
+        if x < min_x - distance_threshold or x > max_x + distance_threshold:
+            new_edge = {
+                'vertices': [(x, min_y, z), (x, max_y, z)],  # Vertical grid line
+                'type': 'grid_line',
+                'is_curve': False,
+                'sampled_points': [],
+                'projected_edge': [(x, min_y, z), (x, max_y, z)],
+                'sigma': 0.0,
+                'mu': 0.0
+            }
+            print("aaa")
+            edges_features.append(new_edge)
+
+        if y < min_y - distance_threshold or y > max_y + distance_threshold:
+            new_edge = {
+                'vertices': [(min_x, y, z), (max_x, y, z)],  # Horizontal grid line
+                'type': 'grid_line',
+                'is_curve': False,
+                'sampled_points': [],
+                'projected_edge': [(min_x, y, z), (max_x, y, z)],
+                'sigma': 0.0,
+                'mu': 0.0
+            }
+            print("aaa")
+            edges_features.append(new_edge)
+
+        if z < min_z - distance_threshold or z > max_z + distance_threshold:
+            new_edge = {
+                'vertices': [(x, y, min_z), (x, y, max_z)],  # Depth grid line
+                'type': 'grid_line',
+                'is_curve': False,
+                'sampled_points': [],
+                'projected_edge': [(x, y, min_z), (x, y, max_z)],
+                'sigma': 0.0,
+                'mu': 0.0
+            }
+            print("aaa")
+            edges_features.append(new_edge)
 
 def plot(edges_features):
     fig = plt.figure()
@@ -96,6 +151,10 @@ def optimize_opacities(edges_features, stylesheet):
             edge_info['mu'] = stylesheet["opacities_per_type"]["vis_edges"]["mu"]
             edge_info['sigma'] = stylesheet["opacities_per_type"]["vis_edges"]["sigma"]
         
+        if edge_type == 'grid_line':
+            edge_info['mu'] = stylesheet["opacities_per_type"]["silhouette"]["mu"]
+            edge_info['sigma'] = stylesheet["opacities_per_type"]["silhouette"]["sigma"]
+
         opacity = np.random.normal(loc=edge_info['mu'], scale=edge_info['sigma']/2, size=1)[0]
         opacity = max(0.0, min(1.0, opacity))
         edge_info['opacity'] = opacity
@@ -188,10 +247,9 @@ if os.path.exists(style_sheet_file_name):
 
 edges_features = brep_read.create_graph_from_step_file('./canvas/step_5.stp')
 edges_features, obj_center= find_bounding_box(edges_features)
-edges_features = optimize_opacities(edges_features, stylesheet)
-edges_features = project_points(edges_features, obj_center)
-edges_features = overshoot_stroke(edges_features)
-remove_duplicate(edges_features)
+optimize_opacities(edges_features, stylesheet)
+project_points(edges_features, obj_center)
+overshoot_stroke(edges_features)
 perturb_strokes(edges_features)
 
 plot_2d(edges_features)
