@@ -20,13 +20,13 @@ class create_stroke_cloud():
                 operation = Op['operation']
                 
                 if operation[0] == 'sketch':
-                    self.parse_sketch(Op)
+                    self.parse_op(Op)
                 
                 if operation[0] == 'extrude_addition' or operation[0] == 'extrude_substraction':
-                    self.parse_extrude(Op)
+                    self.parse_op(Op)
                 
                 if operation[0] == 'fillet':
-                    self.parse_fillet(Op)
+                    self.parse_op(Op)
 
         return
 
@@ -52,11 +52,16 @@ class create_stroke_cloud():
             normal = face.normal
             print(f"Face ID: {face_id}, Vertices: {vertex_ids}, Normal: {normal}")
 
-    def parse_sketch(self, Op):
-        print("parse_sketch")
-        if 'radius' in Op['faces'][0]:
-            self.parse_circle(Op)
-            return 
+        
+        
+    def parse_op(self, Op):
+        if len(Op['faces']) > 0 and 'radius' in Op['faces'][0]:
+            print("parse circle")
+            return
+
+
+        op = Op['operation'][0]
+        print("op", op)
 
         for vertex_data in Op['vertices']:
             vertex = Vertex(id=vertex_data['id'], position=vertex_data['coordinates'])
@@ -73,21 +78,6 @@ class create_stroke_cloud():
             face = Face(id=face_data['id'], vertices=vertices, normal=normal)
             self.faces[face.id] = face  
 
-
-        
-
-    def parse_circle(self, Op):
-        radius = Op['faces'][0]['radius']
-        center = Op['faces'][0]['center']
-        normal = Op['faces'][0]['normal']
-
-        print("parse circle")
-        
-    def parse_extrude(self, Op):
-        print("parse_extrude")
-
-    def parse_fillet(self, Op):
-        print("parse_fillet")
 
 
 # Example usage:
