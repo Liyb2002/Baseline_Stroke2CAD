@@ -98,6 +98,26 @@ def compute_fillet_new_vert(verts_pos, amount):
 
 #----------------------------------------------------------------------------------#
 
+def get_neighbor_verts(vert, non_app_edge, Edges):
+    #get the neighbor of the given vert
+    neighbors = []
+    for edge in Edges:
+        if edge.id == non_app_edge.id:
+            continue
+        if edge.vertices[0].id == vert.id:
+            neighbors.append(edge.vertices[1])
+        elif edge.vertices[1].id == vert.id:
+            neighbors.append(edge.vertices[0])  
+
+    return neighbors
+
+
+#----------------------------------------------------------------------------------#
+
+
+
+#----------------------------------------------------------------------------------#
+
 def find_rectangle_on_plane(points, normal):
     """Find a new rectangle on the same plane as the given larger rectangle, with a translation.
     

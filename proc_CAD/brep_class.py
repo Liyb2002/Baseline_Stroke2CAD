@@ -59,7 +59,8 @@ class Brep:
         boundary_points = [vert.position for vert in target_face.vertices]
         normal = [ 0 - normal for normal in target_face.normal]
 
-        cases = ['create_circle', 'find_rectangle', 'find_triangle', 'triangle_to_cut']
+        # cases = ['create_circle', 'find_rectangle', 'find_triangle', 'triangle_to_cut']
+        cases = ['find_rectangle', 'find_triangle', 'triangle_to_cut']
         selected_case = random.choice(cases)
         if selected_case == 'create_circle':
             radius = random_gen.generate_random_cylinder_radius()
@@ -92,8 +93,8 @@ class Brep:
     def add_extrude_add_op(self):
         amount = random_gen.generate_random_extrude_add()
 
-        if self.idx != 1:
-            amount = -amount
+        if self.idx > 1:
+            amount = abs(amount)
 
         target_face = self.Faces[-1]
         new_face_normal = [-x for x in target_face.normal]
@@ -158,7 +159,10 @@ class Brep:
 
         verts_pos = []
         verts_id = []
+        neighboring_verts = []
         for vert in target_edge.vertices:
+            neighbor_verts = helper.get_neighbor_verts(vert,target_edge,  self.Edges)
+            neighboring_verts.append(neighbor_verts)
             verts_pos.append(vert.position)
             verts_id.append(vert.id)
         
