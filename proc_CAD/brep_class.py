@@ -22,7 +22,6 @@ class Brep:
 
         axis = np.random.choice(['x', 'y', 'z'])
         points, normal = random_gen.generate_random_rectangle(axis)
-        print("normal", normal)
         
         self._sketch_op(points, normal)
 
@@ -163,10 +162,27 @@ class Brep:
             verts_pos.append(vert.position)
             verts_id.append(vert.id)
         
+        #find where to move the old verts
+        new_A, new_B, new_C, new_D = helper.compute_fillet_new_vert(verts_pos, amount)
+        moved_verts_pos = [new_A, new_B]
+
+        #create 2 new verts from new_C and new_D
+        new_vert_C = Vertex(f"vertex_{self.idx}_0", new_C)
+        new_vert_D = Vertex(f"vertex_{self.idx}_1", new_D)
+        self.Vertices.append(new_vert_C)
+        self.Vertices.append(new_vert_D)
+
+
+        #create edge that connect new_C and new_D
+        new_edge_id = f"edge_{self.idx}_0"
+        new_edge = Edge(new_edge_id, [new_vert_C, new_vert_D])
+        self.Edges.append(new_edge)
+
+
         self.idx += 1
         self.op.append(['fillet', target_edge.id, 
                         {'amount': amount}, 
-                        {'verts_pos': verts_pos},
+                        {'verts_pos': moved_verts_pos},
                         {'verts_id': verts_id},])
 
     def write_to_json(self, filename='./canvas/Program.json'):

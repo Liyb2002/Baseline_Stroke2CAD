@@ -73,6 +73,31 @@ def find_target_verts(target_vertices, edges) :
 
 #----------------------------------------------------------------------------------#
 
+def compute_fillet_new_vert(verts_pos, amount):
+    
+    pt_1 = np.array(verts_pos[0])
+    pt_2 = np.array(verts_pos[1])
+    
+    edge_vector = pt_2 - pt_1
+    edge_length = np.linalg.norm(edge_vector)
+    unit_vector = edge_vector / edge_length
+
+
+    if unit_vector[0] != 0 or unit_vector[1] != 0:
+        perp_vector = np.array([-unit_vector[1], unit_vector[0], 0])
+    else:
+        perp_vector = np.array([0, 1, 0])
+    perp_vector = perp_vector / np.linalg.norm(perp_vector)
+
+    new_A = (pt_1 + perp_vector * amount).tolist()
+    new_B = (pt_2 + perp_vector * amount).tolist()
+    new_C = (pt_1 - perp_vector * amount).tolist()
+    new_D = (pt_2 - perp_vector * amount).tolist()
+
+    return new_A, new_B, new_C, new_D
+
+#----------------------------------------------------------------------------------#
+
 def find_rectangle_on_plane(points, normal):
     """Find a new rectangle on the same plane as the given larger rectangle, with a translation.
     
