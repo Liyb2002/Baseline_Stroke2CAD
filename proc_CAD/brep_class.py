@@ -182,7 +182,8 @@ class Brep:
         self.idx += 1
         self.op.append(['fillet', target_edge.id, 
                         {'amount': amount}, 
-                        {'verts_pos': moved_verts_pos},
+                        {'old_verts_pos': verts_pos},
+                        {'new_verts_pos': moved_verts_pos},
                         {'verts_id': verts_id},])
 
     def write_to_json(self, filename='./canvas/Program.json'):

@@ -65,7 +65,7 @@ class parsed_program():
         
     def parse_fillet(self, Op):
         fillet_amount = Op['operation'][2]['amount']
-        verts = Op['operation'][3]['verts']
+        verts = Op['operation'][3]['old_verts_pos']
 
         target_edge = helper.find_target_verts(verts, self.canvas.edges())
 
@@ -80,3 +80,5 @@ def run():
     file_path = './canvas/Program.json'
     parsed_program_class = parsed_program(file_path)
     parsed_program_class.read_json_file()
+
+run()
