@@ -1,7 +1,7 @@
 
 class Face:
     def __init__(self, id, vertices, normal):
-        print(f"An Face is created with ID: {id}")
+        # print(f"An Face is created with ID: {id}")
         self.id = id
         self.vertices = vertices
         self.normal = normal
@@ -21,7 +21,7 @@ class Face:
 
 class Edge:
     def __init__(self, id, vertices):
-        print(f"An edge is created with ID: {id}")
+        # print(f"An edge is created with ID: {id}")
         self.id = id
         self.vertices = vertices
         self.round = False
@@ -41,7 +41,7 @@ class Edge:
 
 class Vertex:
     def __init__(self, id, position):
-        print(f"A vertex is created with ID: {id}")
+        # print(f"A vertex is created with ID: {id}")
         self.id = id
         self.position = position
 

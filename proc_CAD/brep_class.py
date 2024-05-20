@@ -60,16 +60,25 @@ class Brep:
         boundary_points = [vert.position for vert in target_face.vertices]
         normal = [ 0 - normal for normal in target_face.normal]
 
-        create_circle = True
-        if create_circle:
+        cases = ['create_circle', 'find_rectangle', 'find_triangle', 'triangle_to_cut']
+        selected_case = random.choice(cases)
+        if selected_case == 'create_circle':
             radius = random_gen.generate_random_cylinder_radius()
             center = helper.random_circle(boundary_points, normal)
             self.regular_sketch_circle(normal, radius, center)
             return 
 
-        random_polygon_points = helper.find_triangle_to_cut(boundary_points, normal)
+        if selected_case == 'find_rectangle':
+            random_polygon_points = helper.find_rectangle_on_plane(boundary_points, normal)
+
+        if selected_case == 'find_triangle':
+            random_polygon_points = helper.find_triangle_on_plane(boundary_points, normal)
+
+        if selected_case == 'triangle_to_cut':
+            random_polygon_points = helper.find_triangle_to_cut(boundary_points, normal)
 
         self._sketch_op(random_polygon_points, normal)
+
 
     def regular_sketch_circle(self, normal, radius, center):
         face_id = f"face_{self.idx}_{0}"
@@ -148,16 +157,17 @@ class Brep:
         amount = random_gen.generate_random_fillet()
         target_edge.fillet_edge()
 
-        verts = []
+        verts_pos = []
+        verts_id = []
         for vert in target_edge.vertices:
-            verts.append(vert.position)
+            verts_pos.append(vert.position)
+            verts_id.append(vert.id)
         
         self.idx += 1
         self.op.append(['fillet', target_edge.id, 
                         {'amount': amount}, 
-                        {
-            'verts': verts}
-            ])
+                        {'verts_pos': verts_pos},
+                        {'verts_id': verts_id},])
 
     def write_to_json(self, filename='./canvas/Program.json'):
         data = []
