@@ -33,13 +33,22 @@ class create_stroke_cloud():
         return
 
 
-    def output(self):
+    def output(self, onlyStrokes = True):
         print("Outputting details of all components...")
 
         # Output vertices
         print("\nVertices:")
-        for vertex_id, vertex in self.vertices.items():
-            print(f"Vertex ID: {vertex_id}, Position: {vertex.position}")
+        if not onlyStrokes:
+            for vertex_id, vertex in self.vertices.items():
+                print(f"Vertex ID: {vertex_id}, Position: {vertex.position}")
+
+            # Output faces
+            print("\nFaces:")
+            for face_id, face in self.faces.items():
+                vertex_ids = [vertex.id for vertex in face.vertices]
+                normal = face.normal
+                print(f"Face ID: {face_id}, Vertices: {vertex_ids}, Normal: {normal}")
+
 
         # Output edges
         print("\nEdges:")
@@ -50,14 +59,7 @@ class create_stroke_cloud():
             order_count = getattr(edge, 'order_count', 'No order count')
             print(f"Edge ID: {edge_id}, Vertices: {vertex_ids}, Operations: {ops}, Order Count: {order_count}")
 
-        # Output faces
-        print("\nFaces:")
-        for face_id, face in self.faces.items():
-            vertex_ids = [vertex.id for vertex in face.vertices]
-            normal = face.normal
-            print(f"Face ID: {face_id}, Vertices: {vertex_ids}, Normal: {normal}")
 
-    
     def vis_stroke_cloud(self, target_Op = None):
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
@@ -82,12 +84,15 @@ class create_stroke_cloud():
 
         
     def parse_op(self, Op):
+        op = Op['operation'][0]
+
         if len(Op['faces']) > 0 and 'radius' in Op['faces'][0]:
             print("parse circle")
             return
 
 
-        op = Op['operation'][0]
+        if op == 'fillet':
+            self.parse_fillet(Op)
 
         for vertex_data in Op['vertices']:
             vertex = Vertex(id=vertex_data['id'], position=vertex_data['coordinates'])
@@ -117,6 +122,21 @@ class create_stroke_cloud():
             face = Face(id=face_data['id'], vertices=vertices, normal=normal)
             self.faces[face.id] = face  
 
+    def parse_fillet(self, Op):
+        verts_ids = Op['operation'][4]['verts_id']  # Retrieve vertex IDs from the operation
+
+        for edge_id, edge in self.edges.items():
+            # Get the IDs of the vertices in the current edge
+            edge_vertex_ids = [vertex.id for vertex in edge.vertices]
+
+            # Check if the two sets are equal
+            if set(edge_vertex_ids) == set(verts_ids):
+                edge.set_Op('fillet')
+        
+        return
+
+
+
     def find_unwritten_edges(self, cur_op_vertex_ids, op):
         vertex_id_set = set(cur_op_vertex_ids)
 
@@ -132,7 +152,7 @@ def run():
     file_path = './canvas/Program.json'
     parsed_program_class = create_stroke_cloud(file_path)
     parsed_program_class.read_json_file()
-    # parsed_program_class.output()
-    parsed_program_class.vis_stroke_cloud('sketch')
+    parsed_program_class.output()
+    # parsed_program_class.vis_stroke_cloud('fillet')
 
 run()
