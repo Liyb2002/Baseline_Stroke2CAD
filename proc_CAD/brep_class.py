@@ -159,27 +159,32 @@ class Brep:
 
         verts_pos = []
         verts_id = []
-        neighboring_verts = []
+        new_vert_pos = []
         for vert in target_edge.vertices:
-            neighbor_verts = helper.get_neighbor_verts(vert,target_edge,  self.Edges)
-            neighboring_verts.append(neighbor_verts)
             verts_pos.append(vert.position)
             verts_id.append(vert.id)
+            neighbor_verts = helper.get_neighbor_verts(vert,target_edge,  self.Edges)
+            new_vert_pos.append(helper.compute_fillet_new_vert(vert, neighbor_verts, amount))
         
-        #find where to move the old verts
-        new_A, new_B, new_C, new_D = helper.compute_fillet_new_vert(verts_pos, amount)
-        moved_verts_pos = [new_A, new_B]
+        new_A = new_vert_pos[0][0]
+        new_B = new_vert_pos[0][1]
+        new_C = new_vert_pos[1][0]
+        new_D = new_vert_pos[1][1]
 
-        #create 2 new verts from new_C and new_D
-        new_vert_C = Vertex(f"vertex_{self.idx}_0", new_C)
+
+        #move old vertex to new_A and new_C
+        moved_verts_pos = [new_A, new_C]
+        
+        #create 2 new verts from new_B and new_D
+        new_vert_B = Vertex(f"vertex_{self.idx}_0", new_B)
         new_vert_D = Vertex(f"vertex_{self.idx}_1", new_D)
-        self.Vertices.append(new_vert_C)
+        self.Vertices.append(new_vert_B)
         self.Vertices.append(new_vert_D)
 
 
-        #create edge that connect new_C and new_D
+        #create edge that connect new_B and new_D
         new_edge_id = f"edge_{self.idx}_0"
-        new_edge = Edge(new_edge_id, [new_vert_C, new_vert_D])
+        new_edge = Edge(new_edge_id, [new_vert_B, new_vert_D])
         self.Edges.append(new_edge)
 
 

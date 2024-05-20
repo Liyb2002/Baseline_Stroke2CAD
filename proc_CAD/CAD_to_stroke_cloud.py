@@ -125,18 +125,21 @@ class create_stroke_cloud():
     def parse_fillet(self, Op):
         verts_ids = Op['operation'][5]['verts_id']  # Retrieve vertex IDs from the operation
 
+        old_pos = Op['operation'][3]['old_verts_pos']
+        new_pos = Op['operation'][4]['new_verts_pos']
         for edge_id, edge in self.edges.items():
             # Get the IDs of the vertices in the current edge
             edge_vertex_ids = [vertex.id for vertex in edge.vertices]
             
-            for vertex in edge.vertices:
-                old_pos = Op['operation'][4]
-                new_pos = Op['operation'][5]
-                if vertex.position == old_pos:
-                    vertex.position = new_pos
-
             # Check if the two sets are equal
             if set(edge_vertex_ids) == set(verts_ids):
+                
+                for vertex in edge.vertices:
+                    if vertex.position == old_pos[0]:
+                        vertex.position = new_pos[0]
+                    elif vertex.position == old_pos[1]:
+                        vertex.position = new_pos[1]
+
                 edge.set_Op('fillet')
         
         return

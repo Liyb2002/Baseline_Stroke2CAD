@@ -79,6 +79,7 @@ def build_extrude(count, canvas, target_face, extrude_amount, output):
 
 
 def build_fillet(count, canvas, target_edge, radius, output):
+    print("build_fillet")
     stl_dir = os.path.join(home_dir, "canvas", f"vis_{count}.stl")
     step_dir = os.path.join(home_dir, "canvas", f"step_{count}.stp")
 

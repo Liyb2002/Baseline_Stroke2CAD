@@ -73,30 +73,6 @@ def find_target_verts(target_vertices, edges) :
 
 #----------------------------------------------------------------------------------#
 
-def compute_fillet_new_vert(verts_pos, amount):
-    
-    pt_1 = np.array(verts_pos[0])
-    pt_2 = np.array(verts_pos[1])
-    
-    edge_vector = pt_2 - pt_1
-    edge_length = np.linalg.norm(edge_vector)
-    unit_vector = edge_vector / edge_length
-
-
-    if unit_vector[0] != 0 or unit_vector[1] != 0:
-        perp_vector = np.array([-unit_vector[1], unit_vector[0], 0])
-    else:
-        perp_vector = np.array([0, 1, 0])
-    perp_vector = perp_vector / np.linalg.norm(perp_vector)
-
-    new_A = (pt_1 + perp_vector * amount).tolist()
-    new_B = (pt_2 + perp_vector * amount).tolist()
-    new_C = (pt_1 - perp_vector * amount).tolist()
-    new_D = (pt_2 - perp_vector * amount).tolist()
-
-    return new_A, new_B, new_C, new_D
-
-#----------------------------------------------------------------------------------#
 
 def get_neighbor_verts(vert, non_app_edge, Edges):
     #get the neighbor of the given vert
@@ -114,6 +90,21 @@ def get_neighbor_verts(vert, non_app_edge, Edges):
 
 #----------------------------------------------------------------------------------#
 
+def compute_fillet_new_vert(old_vert, neighbor_verts, amount):
+    #given the old_vertex (chosen by fillet op), and the neighbor verts, compute the position to move them
+    move_positions = []
+    old_position = old_vert.position
+    
+    for neighbor_vert in neighbor_verts:
+        direction_vector = [neighbor_vert.position[i] - old_position[i] for i in range(len(old_position))]
+        
+        norm = sum(x**2 for x in direction_vector)**0.5
+        normalized_vector = [x / norm for x in direction_vector]
+        
+        move_position = [old_position[i] + normalized_vector[i] * amount for i in range(len(old_position))]
+        move_positions.append(move_position)
+    
+    return move_positions
 
 
 #----------------------------------------------------------------------------------#
