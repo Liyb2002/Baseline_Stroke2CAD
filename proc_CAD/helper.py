@@ -87,6 +87,20 @@ def get_neighbor_verts(vert, non_app_edge, Edges):
 
     return neighbors
 
+def find_edge_from_verts(vert_1, vert_2, edges):
+    vert_1_id = vert_1.id  # Get the ID of vert_1
+    vert_2_id = vert_2.id  # Get the ID of vert_2
+
+    for edge in edges:
+        # Get the IDs of the vertices in the current edge
+        edge_vertex_ids = [vertex.id for vertex in edge.vertices]
+
+        # Check if both vertex IDs are present in the current edge
+        if vert_1_id in edge_vertex_ids and vert_2_id in edge_vertex_ids:
+            return edge  # Return the edge that contains both vertices
+
+    return None  # Return None if no edge contains both vertices
+    
 
 #----------------------------------------------------------------------------------#
 

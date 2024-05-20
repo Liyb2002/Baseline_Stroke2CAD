@@ -187,6 +187,17 @@ class Brep:
         new_edge = Edge(new_edge_id, [new_vert_B, new_vert_D])
         self.Edges.append(new_edge)
 
+        #need to change the edge connecting neighbor_verts[0] - old_vert to neighbor_verts[0] - new_vert_B
+        for vert in target_edge.vertices:
+            neighbor_verts = helper.get_neighbor_verts(vert,target_edge, self.Edges)
+
+            need_to_change_edge = helper.find_edge_from_verts(vert, neighbor_verts[0], self.Edges)
+
+            if vert == target_edge.vertices[0]:
+                need_to_change_edge.vertices = [vert, new_vert_B]
+            else:
+                need_to_change_edge.vertices = [vert, new_vert_D]
+
 
         self.idx += 1
         self.op.append(['fillet', target_edge.id, 
