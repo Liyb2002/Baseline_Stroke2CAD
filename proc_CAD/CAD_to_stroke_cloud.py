@@ -123,11 +123,17 @@ class create_stroke_cloud():
             self.faces[face.id] = face  
 
     def parse_fillet(self, Op):
-        verts_ids = Op['operation'][4]['verts_id']  # Retrieve vertex IDs from the operation
+        verts_ids = Op['operation'][5]['verts_id']  # Retrieve vertex IDs from the operation
 
         for edge_id, edge in self.edges.items():
             # Get the IDs of the vertices in the current edge
             edge_vertex_ids = [vertex.id for vertex in edge.vertices]
+            
+            for vertex in edge.vertices:
+                old_pos = Op['operation'][4]
+                new_pos = Op['operation'][5]
+                if vertex.position == old_pos:
+                    vertex.position = new_pos
 
             # Check if the two sets are equal
             if set(edge_vertex_ids) == set(verts_ids):
@@ -152,7 +158,7 @@ def run():
     file_path = './canvas/Program.json'
     parsed_program_class = create_stroke_cloud(file_path)
     parsed_program_class.read_json_file()
-    parsed_program_class.output()
+    # parsed_program_class.output()
     parsed_program_class.vis_stroke_cloud('fillet')
 
 run()
