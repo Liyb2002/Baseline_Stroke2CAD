@@ -14,6 +14,7 @@ class create_stroke_cloud():
         self.faces = {}
         self.edges = {}
         self.vertices = {}
+        self.id_to_count = {}
         
     def read_json_file(self):
         with open(self.file_path, 'r') as file:
@@ -23,6 +24,7 @@ class create_stroke_cloud():
             
         
         self.adj_edges()
+        self.map_id_to_count()
 
         return
 
@@ -51,7 +53,9 @@ class create_stroke_cloud():
             # Adding checks if 'Op' and 'order_count' are attributes of edge
             ops = getattr(edge, 'Op', 'No operations')
             order_count = getattr(edge, 'order_count', 'No order count')
-            print(f"Edge ID: {edge_id}, Vertices: {vertex_ids}, Operations: {ops}, Order Count: {order_count}")
+            connected_edge_ids = getattr(edge, 'connected_edges', None)
+        
+            print(f"Edge ID: {edge_id}, Vertices: {vertex_ids},  Operations: {ops}, Order Count: {order_count}, Connected Edges: {connected_edge_ids}")
 
 
     def vis_stroke_cloud(self, target_Op = None):
@@ -183,6 +187,12 @@ class create_stroke_cloud():
         for edge_id, edge in self.edges.items():
             if all(vertex.id in vertex_id_set for vertex in edge.vertices):
                 edge.set_Op(op)
+
+    
+    def map_id_to_count(self):
+        for edge_id, edge in self.edges.items():
+            self.id_to_count[edge_id] = edge.order_count
+                
 
 
 
