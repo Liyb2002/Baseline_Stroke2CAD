@@ -19,16 +19,10 @@ class create_stroke_cloud():
         with open(self.file_path, 'r') as file:
             data = json.load(file)
             for Op in data:
-                operation = Op['operation']
-                
-                if operation[0] == 'sketch':
-                    self.parse_op(Op)
-                
-                if operation[0] == 'extrude_addition' or operation[0] == 'extrude_substraction':
-                    self.parse_op(Op)
-                
-                if operation[0] == 'fillet':
-                    self.parse_op(Op)
+                self.parse_op(Op)
+            
+        
+        self.adj_edges()
 
         return
 
@@ -121,6 +115,7 @@ class create_stroke_cloud():
         if op == 'fillet':
             self.parse_fillet(Op)
 
+
     def parse_fillet(self, Op):
         verts_ids = Op['operation'][5]['verts_id']
 
@@ -167,6 +162,19 @@ class create_stroke_cloud():
 
         return
 
+
+    def adj_edges(self):
+        for edge_id, edge in self.edges.items():
+            connected_edge_ids = set()  
+
+            for vertex in edge.vertices:
+                for other_edge_id, other_edge in self.edges.items():
+                    if other_edge_id != edge_id and vertex in other_edge.vertices:
+                        connected_edge_ids.add(other_edge_id)
+            
+            edge.connected_edges = list(connected_edge_ids)
+
+            # print(f"Edge {edge_id} is connected to edges: {list(connected_edge_ids)}")
 
 
     def find_unwritten_edges(self, cur_op_vertex_ids, op):
