@@ -90,10 +90,6 @@ class create_stroke_cloud():
             print("parse circle")
             return
 
-
-        if op == 'fillet':
-            self.parse_fillet(Op)
-
         for vertex_data in Op['vertices']:
             vertex = Vertex(id=vertex_data['id'], position=vertex_data['coordinates'])
             self.vertices[vertex.id] = vertex
@@ -122,11 +118,16 @@ class create_stroke_cloud():
             face = Face(id=face_data['id'], vertices=vertices, normal=normal)
             self.faces[face.id] = face  
 
+        if op == 'fillet':
+            self.parse_fillet(Op)
+
     def parse_fillet(self, Op):
-        verts_ids = Op['operation'][5]['verts_id']  # Retrieve vertex IDs from the operation
+        verts_ids = Op['operation'][5]['verts_id']
 
         old_pos = Op['operation'][3]['old_verts_pos']
         new_pos = Op['operation'][4]['new_verts_pos']
+        need_to_change_edge = Op['operation'][6]['need_to_change_edge']
+
         for edge_id, edge in self.edges.items():
             # Get the IDs of the vertices in the current edge
             edge_vertex_ids = [vertex.id for vertex in edge.vertices]
@@ -141,7 +142,29 @@ class create_stroke_cloud():
                         vertex.position = new_pos[1]
 
                 edge.set_Op('fillet')
-        
+
+            # We also need to update the edge - vertex in need_to_change_edge
+            #write here
+            for change in need_to_change_edge:
+                edge_id_to_change = change[0]
+                vert_id_1 = change[1]
+                vert_id_2 = change[2]
+
+                if edge_id == edge_id_to_change:
+                    # Find vertices whose IDs match vert_id_1 and vert_id_2
+                    vert_1 = None
+                    vert_2 = None
+
+                    for vertex_id, vertex in self.vertices.items():
+                        if vertex_id == vert_id_1:
+                            vert_1 = vertex
+                        elif vertex_id == vert_id_2:
+                            vert_2 = vertex
+                    
+                    if vert_1 and vert_2:
+                        edge.vertices = [vert_1, vert_2]
+
+
         return
 
 

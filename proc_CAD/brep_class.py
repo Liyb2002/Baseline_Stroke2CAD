@@ -188,23 +188,34 @@ class Brep:
         self.Edges.append(new_edge)
 
         #need to change the edge connecting neighbor_verts[0] - old_vert to neighbor_verts[0] - new_vert_B
+        edge_vertex_pair = []
         for vert in target_edge.vertices:
             neighbor_verts = helper.get_neighbor_verts(vert,target_edge, self.Edges)
 
-            need_to_change_edge = helper.find_edge_from_verts(vert, neighbor_verts[0], self.Edges)
+            need_to_change_edge = helper.find_edge_from_verts(vert, neighbor_verts[1], self.Edges)
 
             if vert == target_edge.vertices[0]:
-                need_to_change_edge.vertices = [vert, new_vert_B]
-            else:
-                need_to_change_edge.vertices = [vert, new_vert_D]
+                edge_vertex_pair.append([need_to_change_edge.id, vert.id, new_vert_B.id])
 
+                #connect neighbor_verts[1] with new_vert_B and new_vert_D
+                edge1 = Edge(f"edge_{self.idx}_1", [new_vert_B, neighbor_verts[1]])  
+                self.Edges.append(edge1)
+            else:
+                edge_vertex_pair.append([need_to_change_edge.id, vert.id, new_vert_D.id])
+                
+                #connect neighbor_verts[1] with new_vert_B and new_vert_D
+                edge2 = Edge(f"edge_{self.idx}_2", [new_vert_D, neighbor_verts[1]])  
+                self.Edges.append(edge2)
+            
 
         self.idx += 1
         self.op.append(['fillet', target_edge.id, 
                         {'amount': amount}, 
                         {'old_verts_pos': verts_pos},
                         {'new_verts_pos': moved_verts_pos},
-                        {'verts_id': verts_id},])
+                        {'verts_id': verts_id},
+                        {'need_to_change_edge': edge_vertex_pair},
+                        ])
 
     def write_to_json(self, filename='./canvas/Program.json'):
         data = []
