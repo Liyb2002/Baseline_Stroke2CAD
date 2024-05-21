@@ -195,16 +195,16 @@ class Brep:
             need_to_change_edge = helper.find_edge_from_verts(vert, neighbor_verts[1], self.Edges)
 
             if vert == target_edge.vertices[0]:
-                edge_vertex_pair.append([need_to_change_edge.id, vert.id, new_vert_B.id])
+                edge_vertex_pair.append([need_to_change_edge.id, neighbor_verts[1].id, new_vert_B.id])
 
                 #connect neighbor_verts[1] with new_vert_B and new_vert_D
-                edge1 = Edge(f"edge_{self.idx}_1", [new_vert_B, neighbor_verts[1]])  
+                edge1 = Edge(f"edge_{self.idx}_1", [new_vert_B, vert])  
                 self.Edges.append(edge1)
             else:
-                edge_vertex_pair.append([need_to_change_edge.id, vert.id, new_vert_D.id])
+                edge_vertex_pair.append([need_to_change_edge.id, neighbor_verts[1].id, new_vert_D.id])
                 
                 #connect neighbor_verts[1] with new_vert_B and new_vert_D
-                edge2 = Edge(f"edge_{self.idx}_2", [new_vert_D, neighbor_verts[1]])  
+                edge2 = Edge(f"edge_{self.idx}_2", [new_vert_D, vert])  
                 self.Edges.append(edge2)
             
 

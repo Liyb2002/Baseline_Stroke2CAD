@@ -185,6 +185,6 @@ def run():
     parsed_program_class = create_stroke_cloud(file_path)
     parsed_program_class.read_json_file()
     # parsed_program_class.output()
-    parsed_program_class.vis_stroke_cloud('fillet')
+    parsed_program_class.vis_stroke_cloud('extrude_addition')
 
 run()
